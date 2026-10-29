@@ -35,8 +35,8 @@ void main() {
       );
     });
 
-    test('release IDs are placeholders and never test IDs', () {
-      expect(config.admobRelease.hasPlaceholders, isTrue);
+    test('release IDs are real (no placeholders) and never test IDs', () {
+      expect(config.admobRelease.hasPlaceholders, isFalse);
       expect(config.admobRelease.allTest, isFalse);
       for (final id in [
         config.admobRelease.appId,

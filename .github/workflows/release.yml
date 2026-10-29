@@ -40,7 +40,10 @@ jobs:
         shell: bash
         run: |
           missing=()
-          for name in PLAY_SERVICE_ACCOUNT_JSON ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+          required="ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD"
+          # The Play service account is only needed when this run uploads to Play.
+          if [ "${{ inputs.upload }}" = "true" ]; then required="PLAY_SERVICE_ACCOUNT_JSON $required"; fi
+          for name in $required; do
             if [ -z "${!name:-}" ]; then missing+=("$name"); fi
           done
           if [ ${#missing[@]} -gt 0 ]; then
