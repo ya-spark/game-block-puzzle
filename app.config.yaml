@@ -28,10 +28,10 @@ admob:
     interstitial: ca-app-pub-3940256099942544/1033173712
     rewarded: ca-app-pub-3940256099942544/5224354917
   release:
-    app_id: PLACEHOLDER_ADMOB_APP_ID # ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY
-    banner: PLACEHOLDER_ADMOB_BANNER_ID
-    interstitial: PLACEHOLDER_ADMOB_INTERSTITIAL_ID
-    rewarded: PLACEHOLDER_ADMOB_REWARDED_ID
+    app_id: ca-app-pub-7116046008549643~3539961113
+    banner: ca-app-pub-7116046008549643/9386350018
+    interstitial: ca-app-pub-7116046008549643/9614861986
+    rewarded: ca-app-pub-7116046008549643/7339926129
 
 # Ad pacing (see lib/core/ads/ad_frequency.dart).
 ads:
