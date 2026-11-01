@@ -52,7 +52,7 @@ class _GameScreenState extends State<GameScreen> {
     game.onGameOver = () {
       _audio.enabled = s.profile.data.soundOn;
       if (game.state.score > s.profile.data.bestScore) {
-        _audio.voice('you_did_it');
+        _audio.voice('better_than_the_best');
       } else {
         _audio.voice('game_over', variants: 2);
       }
