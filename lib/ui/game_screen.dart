@@ -191,18 +191,19 @@ class _GameScreenState extends State<GameScreen> {
                 ),
               ),
               _ScorePill(score: game.state.score),
-              Expanded(
-                child: GameWidget<BlockPuzzleGame>(
-                  key: TestIds.gameWidget,
-                  game: game,
-                ),
-              ),
+              const SizedBox(height: 6),
               _StreakBar(
                 streak: s.profile.displayStreak,
                 combo: game.state.comboStreak,
                 showStreak: s.config.retention.streaks,
               ),
               const SizedBox(height: 6),
+              Expanded(
+                child: GameWidget<BlockPuzzleGame>(
+                  key: TestIds.gameWidget,
+                  game: game,
+                ),
+              ),
               KeyedSubtree(key: TestIds.gameBanner, child: s.ads.buildBanner()),
             ],
           ),
