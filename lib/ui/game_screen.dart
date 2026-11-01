@@ -141,7 +141,7 @@ class _GameScreenState extends State<GameScreen> {
           gradient: RadialGradient(
             center: Alignment(0, -1),
             radius: 1.4,
-            colors: [Color(0xFF1D4552), Color(0xFF0F2430), Color(0xFF0A1822)],
+            colors: [Color(0xFF35C2D8), Color(0xFF2C73E0), Color(0xFF4A3FB5)],
             stops: [0, 0.55, 1],
           ),
         ),
