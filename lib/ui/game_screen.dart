@@ -25,6 +25,7 @@ class _GameScreenState extends State<GameScreen> {
   bool _recorded = false;
   bool _dialogOpen = false;
   final AudioService _audio = AudioService();
+  bool _warned = false;
 
   @override
   void dispose() {
@@ -39,7 +40,10 @@ class _GameScreenState extends State<GameScreen> {
         widget.game ?? BlockPuzzleGame(bestScore: s.profile.data.bestScore);
     game.onPlaced = (o) {
       _audio.enabled = s.profile.data.soundOn;
-      if (!o.gameOver) _praise(o);
+      if (!o.gameOver) {
+        _praise(o);
+        _warnIfCrowded(game);
+      }
       if (s.profile.data.vibrationOn && o.linesCleared > 0) {
         HapticFeedback.mediumImpact();
       }
@@ -47,10 +51,24 @@ class _GameScreenState extends State<GameScreen> {
     game.onChanged = () => setState(() {});
     game.onGameOver = () {
       _audio.enabled = s.profile.data.soundOn;
-      _audio.voice('game_over', variants: 2);
+      if (game.state.score > s.profile.data.bestScore) {
+        _audio.voice('you_did_it');
+      } else {
+        _audio.voice('game_over', variants: 2);
+      }
       _showGameOver(s);
     };
+    _audio.enabled = s.profile.data.soundOn;
+    _audio.voice('go');
     return _game = game;
+  }
+
+  /// "Careful" once the board is over 70% full; re-armed when it clears out.
+  void _warnIfCrowded(BlockPuzzleGame game) {
+    final b = game.state.board;
+    final crowded = b.filledCount > b.size * b.size * 0.7;
+    if (crowded && !_warned) _audio.voice('careful');
+    _warned = crowded;
   }
 
   /// Narrator line for a placement that cleared lines; [PlaceOutcome.combo] is 1 for none.
@@ -163,6 +181,8 @@ class _GameScreenState extends State<GameScreen> {
         if (!mounted) return;
         _recorded = false;
         game.restart();
+        _warned = false;
+        _audio.voice('go');
       default:
         await _finishGame(s);
         if (mounted) Navigator.of(context).pop();
