@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/ads/ad_service.dart';
+import '../core/audio/audio_service.dart';
 import '../core/profile/profile_store.dart';
 import '../core/services.dart';
 import '../game/flame/block_puzzle_game.dart';
+import '../game/rules/game_state.dart';
 import 'test_ids.dart';
 
 class GameScreen extends StatefulWidget {
@@ -22,6 +24,13 @@ class _GameScreenState extends State<GameScreen> {
   BlockPuzzleGame? _game;
   bool _recorded = false;
   bool _dialogOpen = false;
+  final AudioService _audio = AudioService();
+
+  @override
+  void dispose() {
+    _audio.dispose();
+    super.dispose();
+  }
 
   BlockPuzzleGame _ensureGame(Services s) {
     final existing = _game;
@@ -29,13 +38,42 @@ class _GameScreenState extends State<GameScreen> {
     final game =
         widget.game ?? BlockPuzzleGame(bestScore: s.profile.data.bestScore);
     game.onPlaced = (o) {
+      _audio.enabled = s.profile.data.soundOn;
+      if (!o.gameOver) _praise(o);
       if (s.profile.data.vibrationOn && o.linesCleared > 0) {
         HapticFeedback.mediumImpact();
       }
     };
     game.onChanged = () => setState(() {});
-    game.onGameOver = () => _showGameOver(s);
+    game.onGameOver = () {
+      _audio.enabled = s.profile.data.soundOn;
+      _audio.voice('game_over', variants: 2);
+      _showGameOver(s);
+    };
     return _game = game;
+  }
+
+  /// Narrator line for a placement that cleared lines; [PlaceOutcome.combo] is 1 for none.
+  void _praise(PlaceOutcome o) {
+    final String? line;
+    if (o.linesCleared == 0) {
+      line = null;
+    } else if (o.linesCleared >= 4) {
+      line = 'incredible';
+    } else if (o.combo >= 5) {
+      line = 'unstoppable';
+    } else if (o.combo >= 3) {
+      line = 'combo';
+    } else if (o.linesCleared == 3) {
+      line = 'excellent';
+    } else if (o.linesCleared == 2) {
+      line = 'great';
+    } else if (o.combo >= 2) {
+      line = 'nice';
+    } else {
+      line = null;
+    }
+    if (line != null) _audio.voice(line);
   }
 
   Future<void> _finishGame(Services s) async {
