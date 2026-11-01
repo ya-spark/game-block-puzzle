@@ -149,7 +149,7 @@ class _GameScreenState extends State<GameScreen> {
           child: Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(8, 4, 12, 0),
+                padding: const EdgeInsets.fromLTRB(12, 8, 16, 0),
                 child: Row(
                   children: [
                     IconButton.filledTonal(
@@ -157,9 +157,7 @@ class _GameScreenState extends State<GameScreen> {
                       icon: const Icon(Icons.chevron_left),
                       onPressed: () => Navigator.of(context).pop(),
                     ),
-                    Expanded(
-                      child: Center(child: _ScorePill(score: game.state.score)),
-                    ),
+                    const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -192,13 +190,14 @@ class _GameScreenState extends State<GameScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 4),
+              _ScorePill(score: game.state.score),
+              const SizedBox(height: 6),
               _StreakBar(
                 streak: s.profile.displayStreak,
                 combo: game.state.comboStreak,
                 showStreak: s.config.retention.streaks,
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 6),
               Expanded(
                 child: GameWidget<BlockPuzzleGame>(
                   key: TestIds.gameWidget,
@@ -223,10 +222,11 @@ class _ScorePill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        const SizedBox(height: 4),
         Container(
-          width: 130,
+          width: 170,
           alignment: Alignment.center,
-          padding: const EdgeInsets.only(bottom: 2),
+          padding: const EdgeInsets.only(bottom: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(30),
             border: Border.all(color: const Color(0xFF2EC4B6), width: 1.5),
@@ -244,10 +244,19 @@ class _ScorePill extends StatelessWidget {
             key: TestIds.gameScore,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 32,
+              fontSize: 44,
               fontWeight: FontWeight.w800,
               letterSpacing: 1,
             ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'SCORE',
+          style: TextStyle(
+            fontSize: 11,
+            letterSpacing: 3,
+            color: Color(0xFF7FB7BD),
           ),
         ),
       ],
@@ -286,7 +295,7 @@ class _StreakBar extends StatelessWidget {
       if (combo > 0) Text('Combo x$combo', key: TestIds.gameCombo),
     ];
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: const Color(0x0FFFFFFF),
         borderRadius: BorderRadius.circular(20),

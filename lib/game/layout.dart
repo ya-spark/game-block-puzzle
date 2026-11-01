@@ -8,20 +8,15 @@ class PuzzleLayout {
     this.gridSize = 8,
     this.traySlots = 3,
   }) {
-    final margin = width * 0.02;
-    boardTop = min(height * 0.02, 16);
-    // Board is square: fit it to the width, but shrink if the height can't hold board + tray
-    // (board + 0.8 gap + 3.2 tray rows = gridSize + 4 cells).
-    final byWidth = (width - margin * 2) / gridSize;
-    final byHeight = (height - boardTop - margin) / (gridSize + 4);
-    cellSize = min(byWidth, byHeight);
-    boardLeft = (width - cellSize * gridSize) / 2;
+    final margin = width * 0.04;
+    cellSize = (width - margin * 2) / gridSize;
+    boardLeft = margin;
+    boardTop = min(height * 0.06, 60);
     final boardBottom = boardTop + cellSize * gridSize;
     // Tray slots share the area under the board.
     trayTop = boardBottom + cellSize * 0.8;
     trayHeight = max(cellSize * 3.2, height - trayTop - margin);
     slotWidth = (width - margin * 2) / traySlots;
-    trayLeft = margin;
     // Pieces in the tray are drawn smaller than board cells.
     trayCellSize = min(cellSize * 0.62, slotWidth / 5.5);
   }
@@ -34,7 +29,6 @@ class PuzzleLayout {
   late final double cellSize;
   late final double boardLeft;
   late final double boardTop;
-  late final double trayLeft;
   late final double trayTop;
   late final double trayHeight;
   late final double slotWidth;
@@ -44,12 +38,12 @@ class PuzzleLayout {
 
   /// Center of a tray slot.
   (double, double) trayCenter(int slot) =>
-      (trayLeft + slotWidth * (slot + 0.5), trayTop + trayHeight / 2);
+      (boardLeft + slotWidth * (slot + 0.5), trayTop + trayHeight / 2);
 
   /// Which tray slot a point is in, or null.
   int? traySlotAt(double x, double y) {
     if (y < trayTop || y > trayTop + trayHeight) return null;
-    final i = ((x - trayLeft) / slotWidth).floor();
+    final i = ((x - boardLeft) / slotWidth).floor();
     return (i >= 0 && i < traySlots) ? i : null;
   }
 
