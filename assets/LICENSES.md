@@ -5,7 +5,24 @@ its source and license. `scripts/check_asset_licenses.sh` fails CI otherwise.
 
 | File | Source | License | Notes |
 |------|--------|---------|-------|
-| _none_ | | | The template draws everything in code; no binary assets are bundled. |
+| assets/voice/awesome.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/better_than_the_best.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/careful.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/combo.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/excellent.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/fantastic.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/game_over.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/game_over_02.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/get_ready.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/go.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/great.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/incredible.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/nice.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/unbelievable.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/unstoppable.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/well_done.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/well_done_02.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
+| assets/voice/you_did_it.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
 
 Format for an asset row: `| assets/sfx/pop.ogg | https://example.org/pop | CC0-1.0 | by Jane Doe |`
 
