@@ -18,10 +18,9 @@ class PuzzleLayout {
       (width - margin * 2) / gridSize,
       (height - topPad - margin) / (needed - 8 + gridSize),
     );
-    // Spare height goes above the board, up to one cell, so the whole play area sits lower
-    // and the top rows are within thumb reach.
-    final spare = height - topPad - margin - cellSize * (needed - 8 + gridSize);
-    boardTop = topPad + spare.clamp(0, cellSize);
+    // The board sits vertically centred on screen, as far as the tray under it still fits.
+    final maxTop = height - margin - cellSize * (needed - 8 + gridSize);
+    boardTop = max(topPad, min((height - cellSize * gridSize) / 2, maxTop)).toDouble();
     boardLeft = (width - cellSize * gridSize) / 2;
     final boardBottom = boardTop + cellSize * gridSize;
     // Tray slots share the area under the board.

@@ -140,7 +140,7 @@ void main() {
     await bot.waitForGame();
     final origin = tester.getTopLeft(find.byKey(TestIds.gameWidget));
     final (sx, sy) = bot.game.layout.trayCenter(0);
-    await tester.dragFrom(origin + Offset(sx, sy), const Offset(0, 20));
+    await tester.dragFrom(origin + Offset(sx, sy), Offset(-sx + 1, 0));
     await tester.pump(const Duration(milliseconds: 50));
     expect(bot.game.state.piecesPlaced, 0);
   });
