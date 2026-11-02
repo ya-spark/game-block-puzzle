@@ -32,7 +32,7 @@ class PuzzleLayout {
   }
 
   /// Free space kept under the tray pieces, in board cells.
-  static const double bottomGapCells = 1.2;
+  static const double bottomGapCells = 0.7;
 
   final double width;
   final double height;

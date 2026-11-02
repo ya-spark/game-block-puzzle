@@ -209,45 +209,50 @@ class _GameScreenState extends State<GameScreen> {
               // One compact header row (back, score, best) plus a one-line streak
               // strip, so the play area below keeps room for the piece tray.
               Padding(
-                padding: const EdgeInsets.fromLTRB(12, 4, 16, 0),
-                child: Row(
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                child: Stack(
+                  alignment: Alignment.center,
                   children: [
-                    IconButton.filledTonal(
-                      key: TestIds.gameBack,
-                      icon: const Icon(Icons.chevron_left),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                    Expanded(
-                      child: Center(child: _ScorePill(score: game.state.score)),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0x0FFFFFFF),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.star_rounded,
-                            color: Color(0xFFFFC145),
-                            size: 18,
+                    // Score is centred on the screen, independent of the side buttons.
+                    _ScorePill(score: game.state.score),
+                    Row(
+                      children: [
+                        IconButton.filledTonal(
+                          key: TestIds.gameBack,
+                          icon: const Icon(Icons.chevron_left),
+                          onPressed: () => Navigator.of(context).pop(),
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 7,
                           ),
-                          const SizedBox(width: 6),
-                          Text(
-                            '${game.state.bestScore}',
-                            key: TestIds.gameBest,
-                            style: const TextStyle(
-                              color: Color(0xFFFFC145),
-                              fontWeight: FontWeight.bold,
-                            ),
+                          decoration: BoxDecoration(
+                            color: const Color(0x0FFFFFFF),
+                            borderRadius: BorderRadius.circular(18),
                           ),
-                        ],
-                      ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.star_rounded,
+                                color: Color(0xFFFFC145),
+                                size: 18,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                '${game.state.bestScore}',
+                                key: TestIds.gameBest,
+                                style: const TextStyle(
+                                  color: Color(0xFFFFC145),
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
