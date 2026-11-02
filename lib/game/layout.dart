@@ -65,7 +65,7 @@ class PuzzleLayout {
   }
 
   /// The dragged piece's bottom edge floats this far above the finger, whatever the press point.
-  double get dragLift => cellSize * 2.0;
+  double get dragLift => cellSize * 2.5;
 
   /// Board cell (row, col) under a point, or null when outside the board.
   (int, int)? cellAt(double x, double y) {
