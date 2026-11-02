@@ -94,6 +94,10 @@ class PuzzleView extends PositionComponent
 
   int? _dragSlot;
   Vector2 _finger = Vector2.zero();
+
+  /// Horizontal distance from the press to the piece centre, kept for the whole drag so a
+  /// press on the left of a piece keeps the piece to the left of the finger.
+  double _grabX = 0;
   List<int> _flashRows = const [];
   List<int> _flashCols = const [];
   double _flashT = 0;
@@ -130,6 +134,7 @@ class PuzzleView extends PositionComponent
         !game.state.isGameOver) {
       _dragSlot = slot;
       _finger = p.clone();
+      _grabX = p.x - layout.trayCenter(slot).$1;
     }
   }
 
@@ -160,12 +165,13 @@ class PuzzleView extends PositionComponent
     game._handlePlace(slot, r, c);
   }
 
-  /// Screen top-left of the dragged piece: centred on the finger horizontally, with its
-  /// bottom edge [PuzzleLayout.dragLift] above the finger, wherever the press landed.
+  /// Screen top-left of the dragged piece: horizontally it keeps the offset of the press from
+  /// the piece centre; vertically its bottom edge is always [PuzzleLayout.dragLift] above the
+  /// finger, wherever the press landed.
   (double, double) _draggedTopLeft(Piece piece) {
     final cs = layout.cellSize;
     return (
-      _finger.x - piece.width * cs / 2,
+      _finger.x - _grabX - piece.width * cs / 2,
       _finger.y - layout.dragLift - piece.height * cs,
     );
   }
