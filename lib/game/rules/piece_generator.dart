@@ -22,10 +22,10 @@ class PieceGenerator {
   }
 
   /// Score below which a dealt tray can also be played out completely, one piece after another.
-  static const int easyUntil = 1000;
+  static const int easyUntil = 50000;
 
   /// Score at which the shape bias towards big pieces is at its maximum.
-  static const int hardAt = 5000;
+  static const int hardAt = 500000;
 
   /// Three pieces for [board]. Every piece fits the board on its own whenever any piece does,
   /// at every score: a dead piece is only dealt when the board is almost full.
