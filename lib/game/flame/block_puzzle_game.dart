@@ -94,10 +94,6 @@ class PuzzleView extends PositionComponent
 
   int? _dragSlot;
   Vector2 _finger = Vector2.zero();
-
-  /// The dragged piece is always centred this far above the finger, wherever the press
-  /// landed, so the finger never covers it and it does not depend on where you pressed.
-  Vector2 _grab = Vector2.zero();
   List<int> _flashRows = const [];
   List<int> _flashCols = const [];
   double _flashT = 0;
@@ -134,7 +130,6 @@ class PuzzleView extends PositionComponent
         !game.state.isGameOver) {
       _dragSlot = slot;
       _finger = p.clone();
-      _grab = Vector2(0, layout.dragLift);
     }
   }
 
@@ -165,10 +160,18 @@ class PuzzleView extends PositionComponent
     game._handlePlace(slot, r, c);
   }
 
-  (int, int) _dragTopLeftCell(Piece piece) {
+  /// Screen top-left of the dragged piece: centred on the finger horizontally, with its
+  /// bottom edge [PuzzleLayout.dragLift] above the finger, wherever the press landed.
+  (double, double) _draggedTopLeft(Piece piece) {
     final cs = layout.cellSize;
-    final x = _finger.x - _grab.x - piece.width * cs / 2;
-    final y = _finger.y - _grab.y - piece.height * cs / 2;
+    return (
+      _finger.x - piece.width * cs / 2,
+      _finger.y - layout.dragLift - piece.height * cs,
+    );
+  }
+
+  (int, int) _dragTopLeftCell(Piece piece) {
+    final (x, y) = _draggedTopLeft(piece);
     return layout.snapTopLeft(x, y);
   }
 
@@ -305,8 +308,8 @@ class PuzzleView extends PositionComponent
         _drawPiece(
           canvas,
           piece,
-          _finger.x - _grab.x - piece.width * cs / 2,
-          _finger.y - _grab.y - piece.height * cs / 2,
+          _draggedTopLeft(piece).$1,
+          _draggedTopLeft(piece).$2,
           cs,
         );
       }

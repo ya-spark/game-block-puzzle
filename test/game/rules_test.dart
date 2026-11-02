@@ -358,7 +358,7 @@ void main() {
       final (fx, fy) = l.fingerFor(2, 3, 4, 1);
       // Reconstruct the piece top-left the way the view does.
       final tlX = fx - 3 * l.cellSize / 2;
-      final tlY = fy - l.dragLift - 2 * l.cellSize / 2;
+      final tlY = fy - l.dragLift - 2 * l.cellSize;
       expect(l.snapTopLeft(tlX, tlY), (4, 1));
     });
   });
