@@ -115,6 +115,57 @@ void main() {
     );
   });
 
+  group('PieceGenerator difficulty by score', () {
+    // A crowded board: two 1x1 holes and a 2x2 hole, so many pieces do not fit.
+    Board crowded() {
+      final rows = List.filled(8, '########');
+      rows[0] = '##.#####';
+      rows[3] = '#.######';
+      rows[6] = '######..';
+      rows[7] = '######..';
+      return Board.fromRows(rows);
+    }
+
+    test('low score: every dealt piece fits the board', () {
+      final board = crowded();
+      final gen = PieceGenerator(Random(11));
+      for (var i = 0; i < 40; i++) {
+        final tray = gen.dealTray(board, score: 0);
+        expect(tray.every(board.canPlaceAnywhere), isTrue);
+      }
+    });
+
+    test('mid score: every dealt piece fits the board', () {
+      final board = crowded();
+      final gen = PieceGenerator(Random(12));
+      for (var i = 0; i < 40; i++) {
+        final tray = gen.dealTray(board, score: PieceGenerator.easyUntil);
+        expect(tray.every(board.canPlaceAnywhere), isTrue);
+      }
+    });
+
+    test('high score: only one playable piece is guaranteed, and sometimes only one', () {
+      final board = crowded();
+      final gen = PieceGenerator(Random(13));
+      var withDeadPiece = 0;
+      for (var i = 0; i < 200; i++) {
+        final tray = gen.dealTray(board, score: PieceGenerator.mediumUntil);
+        expect(tray.any(board.canPlaceAnywhere), isTrue);
+        if (!tray.every(board.canPlaceAnywhere)) withDeadPiece++;
+      }
+      expect(withDeadPiece, greaterThan(0));
+    });
+
+    test('dealing on a mostly empty board is fast', () {
+      final gen = PieceGenerator(Random(14));
+      final sw = Stopwatch()..start();
+      for (var i = 0; i < 200; i++) {
+        gen.dealTray(Board.empty(), score: 0);
+      }
+      expect(sw.elapsedMilliseconds, lessThan(2000));
+    });
+  });
+
   group('GameState', () {
     GameState game({List<Piece>? tray, Board? board}) => GameState(
       generator: PieceGenerator(Random(3)),

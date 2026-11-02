@@ -96,7 +96,7 @@ class GameState {
     if (score > bestScore) bestScore = score;
 
     if (_tray.every((p) => p == null)) {
-      _tray = List<Piece?>.of(_generator.dealTray(board));
+      _tray = List<Piece?>.of(_generator.dealTray(board, score: score));
     }
     _checkGameOver();
     return PlaceOutcome(
@@ -121,7 +121,7 @@ class GameState {
     if (!canRevive) return false;
     revivesUsed++;
     board = board.clearFullestRows(2);
-    _tray = List<Piece?>.of(_generator.dealTray(board));
+    _tray = List<Piece?>.of(_generator.dealTray(board, score: score));
     comboStreak = 0;
     _checkGameOver();
     return true;
