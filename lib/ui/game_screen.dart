@@ -133,12 +133,19 @@ class _GameScreenState extends State<GameScreen> {
     final action = await showDialog<String>(
       context: context,
       barrierDismissible: false,
+      // No dimming and a dialog pinned to the top, so the final board stays visible.
+      barrierColor: Colors.transparent,
       builder: (ctx) => AlertDialog(
         key: TestIds.gameOverDialog,
+        alignment: Alignment.topCenter,
+        insetPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        titlePadding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+        contentPadding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
+        actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
         title: const Text('Game over'),
         content: Text(
-          'Score ${game.state.score}\nBest ${game.state.bestScore}'
-          '${game.state.canRevive ? '\nRevives left: ${game.state.revivesRemaining}' : ''}',
+          'Score ${game.state.score} · Best ${game.state.bestScore}'
+          '${game.state.canRevive ? ' · Revives left: ${game.state.revivesRemaining}' : ''}',
           key: TestIds.gameOverRevivesLeft,
         ),
         actions: [

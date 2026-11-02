@@ -27,6 +27,11 @@ class PieceGenerator {
   /// Score at which the shape bias towards big pieces is at its maximum.
   static const int hardAt = 500000;
 
+  /// While at most this share of the board is filled there is plenty of room, so pieces
+  /// smaller than [minRoomySize] cells are not dealt.
+  static const double roomyFilledShare = 0.5;
+  static const int minRoomySize = 3;
+
   /// Three pieces for [board]. Every piece fits the board on its own whenever any piece does,
   /// at every score: a dead piece is only dealt when the board is almost full.
   ///
@@ -34,9 +39,13 @@ class PieceGenerator {
   /// big awkward ones later. Below [easyUntil] the three pieces can also all be placed one
   /// after another (tried 50 times, then relaxed).
   List<Piece> dealTray(Board board, {int count = 3, int score = 0}) {
+    final roomy =
+        board.filledCount <= board.size * board.size * roomyFilledShare;
     final fitting = [
       for (final w in PieceCatalog.weighted)
-        if (board.canPlaceAnywhere(w.piece)) w,
+        if ((!roomy || w.piece.size >= minRoomySize) &&
+            board.canPlaceAnywhere(w.piece))
+          w,
     ];
     if (fitting.isNotEmpty) {
       // size^bias: -0.5 at score 0 (small pieces more likely) up to +2 at [hardAt].

@@ -145,18 +145,32 @@ void main() {
     });
 
     test('higher score deals bigger pieces on average', () {
+      // More than half full, so small pieces are not filtered out as on a roomy board.
+      final board = Board.fromRows([
+        for (var i = 0; i < 5; i++) '#######.',
+        ...List.filled(3, '........'),
+      ]);
       double avgSize(int score) {
         final gen = PieceGenerator(Random(15));
         var total = 0;
         for (var i = 0; i < 300; i++) {
           total += gen
-              .dealTray(Board.empty(), score: score)
+              .dealTray(board, score: score)
               .fold(0, (a, p) => a + p.size);
         }
         return total / 900;
       }
 
       expect(avgSize(PieceGenerator.hardAt), greaterThan(avgSize(0) + 0.5));
+    });
+
+    test('a roomy board is never dealt pieces under three cells', () {
+      final gen = PieceGenerator(Random(21));
+      for (var i = 0; i < 200; i++) {
+        for (final p in gen.dealTray(Board.empty())) {
+          expect(p.size, greaterThanOrEqualTo(PieceGenerator.minRoomySize));
+        }
+      }
     });
 
     test('dealing on a mostly empty board is fast', () {
