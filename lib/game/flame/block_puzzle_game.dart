@@ -95,8 +95,8 @@ class PuzzleView extends PositionComponent
   int? _dragSlot;
   Vector2 _finger = Vector2.zero();
 
-  /// Where the press landed relative to the piece centre. The dragged piece keeps this
-  /// offset, so it does not jump under the finger when the drag starts.
+  /// The dragged piece is always centred this far above the finger, wherever the press
+  /// landed, so the finger never covers it and it does not depend on where you pressed.
   Vector2 _grab = Vector2.zero();
   List<int> _flashRows = const [];
   List<int> _flashCols = const [];
@@ -134,9 +134,7 @@ class PuzzleView extends PositionComponent
         !game.state.isGameOver) {
       _dragSlot = slot;
       _finger = p.clone();
-      final (cx, cy) = layout.trayCenter(slot);
-      // Keep the press offset, but never let the piece sit under the finger.
-      _grab = Vector2(p.x - cx, max(p.y - cy, layout.minLift));
+      _grab = Vector2(0, layout.dragLift);
     }
   }
 
