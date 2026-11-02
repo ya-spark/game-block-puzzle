@@ -9,15 +9,19 @@ class PuzzleLayout {
     this.traySlots = 3,
   }) {
     final margin = width * 0.04;
-    boardTop = min(height * 0.06, 60);
+    final topPad = min(height * 0.06, 60);
     // Vertical budget in cells: board, gap, piece tray, and the free strip under the
     // pieces. The strip is where thumbs rest to start a drag, so it is never squeezed out:
     // on short screens the whole board shrinks instead.
     const needed = 8 + 0.5 + 3.2 + bottomGapCells;
     cellSize = min(
       (width - margin * 2) / gridSize,
-      (height - boardTop - margin) / (needed - 8 + gridSize),
+      (height - topPad - margin) / (needed - 8 + gridSize),
     );
+    // Spare height goes above the board, up to one cell, so the whole play area sits lower
+    // and the top rows are within thumb reach.
+    final spare = height - topPad - margin - cellSize * (needed - 8 + gridSize);
+    boardTop = topPad + spare.clamp(0, cellSize);
     boardLeft = (width - cellSize * gridSize) / 2;
     final boardBottom = boardTop + cellSize * gridSize;
     // Tray slots share the area under the board.
