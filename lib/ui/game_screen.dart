@@ -8,6 +8,7 @@ import '../core/profile/profile_store.dart';
 import '../core/services.dart';
 import '../game/flame/block_puzzle_game.dart';
 import '../game/rules/game_state.dart';
+import 'game_over_panel.dart';
 import 'test_ids.dart';
 
 class GameScreen extends StatefulWidget {
@@ -133,55 +134,46 @@ class _GameScreenState extends State<GameScreen> {
     final action = await showDialog<String>(
       context: context,
       barrierDismissible: false,
-      // No dimming and a dialog pinned to the top, so the final board stays visible.
       barrierColor: Colors.transparent,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => GameOverPanel(
         key: TestIds.gameOverDialog,
-        // Pinned to the top, with no dimming, so the play field stays visible; a bright
-        // themed card instead of a dull dark panel.
-        alignment: Alignment.topCenter,
-        insetPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        backgroundColor: Theme.of(ctx).colorScheme.primaryContainer,
-        surfaceTintColor: Colors.transparent,
-        elevation: 12,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: Theme.of(ctx).colorScheme.primary, width: 2),
-        ),
-        titleTextStyle: Theme.of(ctx).textTheme.titleLarge?.copyWith(
-          color: Theme.of(ctx).colorScheme.onPrimaryContainer,
-          fontWeight: FontWeight.w800,
-        ),
-        contentTextStyle: Theme.of(ctx).textTheme.bodyMedium
-            ?.copyWith(color: Theme.of(ctx).colorScheme.onPrimaryContainer),
-        titlePadding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-        contentPadding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-        actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-        title: const Text('Game over'),
-        content: Text(
-          'Score ${game.state.score} · Best ${game.state.bestScore}'
-          '${game.state.canRevive ? ' · Revives left: ${game.state.revivesRemaining}' : ''}',
-          key: TestIds.gameOverRevivesLeft,
-        ),
-        actions: [
+        title: 'Game over',
+        details: [
+          Text(
+            'Score ${game.state.score}',
+            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+          ),
+          Text('Best ${game.state.bestScore}'),
           if (game.state.canRevive)
-            FilledButton.icon(
+            Text(
+              'Revives left: ${game.state.revivesRemaining}',
+              key: TestIds.gameOverRevivesLeft,
+            ),
+        ],
+        buttons: [
+          if (game.state.canRevive)
+            GameOverButton(
               key: TestIds.gameOverRevive,
-              icon: const Icon(Icons.smart_display),
-              label: Text(
-                'Revive (watch ad) · ${game.state.revivesRemaining} left',
-              ),
+              kind: GameOverButtonKind.primary,
+              icon: Icons.smart_display,
+              label: 'Revive · ${game.state.revivesRemaining} left',
               onPressed: () => Navigator.pop(ctx, 'revive'),
             ),
-          TextButton(
+          GameOverButton(
             key: TestIds.gameOverRetry,
+            kind: game.state.canRevive
+                ? GameOverButtonKind.secondary
+                : GameOverButtonKind.primary,
+            icon: Icons.replay,
+            label: 'Play again',
             onPressed: () => Navigator.pop(ctx, 'retry'),
-            child: const Text('Play again'),
           ),
-          TextButton(
+          GameOverButton(
             key: TestIds.gameOverHome,
+            kind: GameOverButtonKind.ghost,
+            icon: Icons.home,
+            label: 'Home',
             onPressed: () => Navigator.pop(ctx, 'home'),
-            child: const Text('Home'),
           ),
         ],
       ),
