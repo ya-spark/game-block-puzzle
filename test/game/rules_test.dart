@@ -348,14 +348,17 @@ void main() {
       for (var i = 0; i < 3; i++) {
         final (x, y) = l.trayCenter(i);
         expect(l.traySlotAt(x, y), i);
+        // A press well below the piece still picks it, down to the screen bottom.
+        expect(l.traySlotAt(x, l.height - 1), i);
       }
+      expect(l.traySlotAt(l.boardLeft, l.boardTop), isNull);
     });
 
     test('fingerFor snaps the piece to the requested cell', () {
       final (fx, fy) = l.fingerFor(2, 3, 4, 1);
       // Reconstruct the piece top-left the way the view does.
       final tlX = fx - 3 * l.cellSize / 2;
-      final tlY = fy - 2 * l.cellSize / 2;
+      final tlY = fy - l.minLift - 2 * l.cellSize / 2;
       expect(l.snapTopLeft(tlX, tlY), (4, 1));
     });
   });

@@ -135,7 +135,8 @@ class PuzzleView extends PositionComponent
       _dragSlot = slot;
       _finger = p.clone();
       final (cx, cy) = layout.trayCenter(slot);
-      _grab = Vector2(p.x - cx, p.y - cy);
+      // Keep the press offset, but never let the piece sit under the finger.
+      _grab = Vector2(p.x - cx, max(p.y - cy, layout.minLift));
     }
   }
 

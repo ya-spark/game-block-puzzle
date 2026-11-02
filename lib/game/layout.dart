@@ -55,12 +55,18 @@ class PuzzleLayout {
     trayTop + (trayHeight - cellSize * bottomGapCells) / 2,
   );
 
-  /// Which tray slot a point is in, or null.
+  /// Which tray slot a point is in, or null. Generous on purpose: a press anywhere from just
+  /// above the tray down to the bottom of the screen, across the full width, picks the slot
+  /// under it (thumbs press below the piece, not on it).
   int? traySlotAt(double x, double y) {
-    if (y < trayTop || y > trayTop + trayHeight) return null;
-    final i = ((x - boardLeft) / slotWidth).floor();
-    return (i >= 0 && i < traySlots) ? i : null;
+    if (y < trayTop - cellSize * 0.25 || y > height) return null;
+    final i = ((x - boardLeft) / slotWidth).floor().clamp(0, traySlots - 1);
+    return i;
   }
+
+  /// Least distance the dragged piece's centre keeps above the finger, so a press right on
+  /// the piece does not leave the finger covering it.
+  double get minLift => cellSize * 1.0;
 
   /// Board cell (row, col) under a point, or null when outside the board.
   (int, int)? cellAt(double x, double y) {
@@ -75,11 +81,11 @@ class PuzzleLayout {
       (boardLeft + cellSize * (col + 0.5), boardTop + cellSize * (row + 0.5));
 
   /// Finger position that makes a piece of [pieceRows]x[pieceCols] snap with its top-left on
-  /// board cell [row],[col], for a drag that started on the piece centre. Used by the test bot.
+  /// board cell [row],[col], for a drag that started on the piece centre (which lifts the piece by [minLift]). Used by the test bot.
   (double, double) fingerFor(int pieceRows, int pieceCols, int row, int col) =>
       (
         boardLeft + (col + pieceCols / 2) * cellSize,
-        boardTop + (row + pieceRows / 2) * cellSize,
+        boardTop + (row + pieceRows / 2) * cellSize + minLift,
       );
 
   /// Snaps a dragged piece's top-left (screen px) to the nearest board cell.
