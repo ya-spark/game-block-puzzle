@@ -18,9 +18,17 @@ class PuzzleLayout {
       (width - margin * 2) / gridSize,
       (height - topPad - margin) / (needed - 8 + gridSize),
     );
-    // The board sits vertically centred on screen, as far as the tray under it still fits.
-    final maxTop = height - margin - cellSize * (needed - 8 + gridSize);
-    boardTop = max(topPad, min((height - cellSize * gridSize) / 2, maxTop)).toDouble();
+    // The board sits [boardDropCells] below vertical centre, so the top rows stay within thumb
+    // reach, but never so low that the tray pieces leave the screen.
+    final maxTop =
+        height - margin - cellSize * (needed - 8 - bottomGapCells + gridSize);
+    boardTop = max(
+      topPad,
+      min(
+        (height - cellSize * gridSize) / 2 + cellSize * boardDropCells,
+        maxTop,
+      ),
+    ).toDouble();
     boardLeft = (width - cellSize * gridSize) / 2;
     final boardBottom = boardTop + cellSize * gridSize;
     // Tray slots share the area under the board.
@@ -33,6 +41,9 @@ class PuzzleLayout {
     // Pieces in the tray are drawn smaller than board cells.
     trayCellSize = min(cellSize * 0.62, slotWidth / 5.5);
   }
+
+  /// How far below vertical centre the board sits, in board cells.
+  static const double boardDropCells = 1.5;
 
   /// Free space kept under the tray pieces, in board cells.
   static const double bottomGapCells = 0.7;
