@@ -13,14 +13,15 @@ class ChallengesScreen extends StatelessWidget {
     final s = ServicesScope.of(context);
     final profile = s.profile;
     return Scaffold(
-      extendBodyBehindAppBar: false,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
         title: const Text(
-          '🏆 Challenges',
-          style: TextStyle(fontWeight: FontWeight.w900, color: Colors.white),
+          '\u{1F3C6} Challenges',
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 26),
         ),
-        iconTheme: const IconThemeData(color: Colors.white),
-        backgroundColor: KidColors.grape,
       ),
       body: Container(
         decoration: KidColors.background,
@@ -30,69 +31,82 @@ class ChallengesScreen extends StatelessWidget {
             builder: (context, _) {
               final stats = profile.data.stats;
               return ListView(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  16,
-                  16,
-                  24 + MediaQuery.viewPaddingOf(context).bottom,
-                ),
+                padding: const EdgeInsets.fromLTRB(16, kToolbarHeight, 16, 24),
                 children: [
                   if (s.config.retention.dailyChallenges) ...[
-                    const _Heading('🎯 Daily challenges'),
+                    Text(
+                      'Daily challenges',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            shadows: const [
+                              Shadow(
+                                color: KidColors.ink,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                    ),
                     for (final (i, c) in profile.challenges.indexed)
-                      Card(
+                      Container(
                         key: TestIds.challengeTile(i),
-                        color: Colors.white,
-                        elevation: 4,
                         margin: const EdgeInsets.symmetric(vertical: 6),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          side: BorderSide(
-                            color: c.claimable ? KidColors.sun : Colors.white,
-                            width: 3,
-                          ),
+                        padding: const EdgeInsets.all(14),
+                        decoration: _cardDecoration(
+                          c.claimed ? KidColors.mint : KidColors.sun,
                         ),
-                        child: ListTile(
-                          minVerticalPadding: 14,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 4,
-                          ),
-                          title: Text(
-                            c.description,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: KidColors.ink,
+                        child: Row(
+                          children: [
+                            Text(
+                              c.claimed ? '\u2705' : '\u{1F3AF}',
+                              style: const TextStyle(fontSize: 32),
                             ),
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: LinearProgressIndicator(
-                                minHeight: 12,
-                                color: KidColors.mint,
-                                backgroundColor: const Color(0xFFE6E6F2),
-                                value: (c.progress / c.target)
-                                    .clamp(0, 1)
-                                    .toDouble(),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    c.description,
+                                    style: const TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w800,
+                                      color: KidColors.ink,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: LinearProgressIndicator(
+                                      minHeight: 12,
+                                      color: KidColors.mint,
+                                      backgroundColor: Colors.black12,
+                                      value: (c.progress / c.target)
+                                          .clamp(0, 1)
+                                          .toDouble(),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                          ),
-                          trailing: c.claimed
-                              ? const Icon(
-                                  Icons.check_circle,
-                                  color: KidColors.mint,
-                                  size: 36,
-                                )
-                              : FilledButton(
+                            const SizedBox(width: 12),
+                            if (c.claimed)
+                              const Icon(
+                                Icons.check_circle,
+                                color: KidColors.mint,
+                                size: 40,
+                              )
+                            else
+                              SizedBox(
+                                height: 52,
+                                child: FilledButton(
                                   key: TestIds.challengeClaim(c.id),
                                   style: FilledButton.styleFrom(
-                                    minimumSize: const Size(72, 52),
-                                    backgroundColor: KidColors.sun,
-                                    foregroundColor: KidColors.ink,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(26),
+                                    backgroundColor: KidColors.coral,
+                                    shape: const StadiumBorder(),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 18,
                                     ),
                                     textStyle: const TextStyle(
                                       fontSize: 18,
@@ -102,36 +116,79 @@ class ChallengesScreen extends StatelessWidget {
                                   onPressed: c.claimable
                                       ? () => profile.claimChallenge(c.id)
                                       : null,
-                                  child: Text('+${c.reward} 🪙'),
+                                  child: Text('\u{1FA99} +${c.reward}'),
                                 ),
+                              ),
+                          ],
                         ),
                       ),
                     const SizedBox(height: 16),
                   ],
                   if (s.config.retention.achievements) ...[
-                    const _Heading('🌟 Achievements'),
+                    Text(
+                      'Achievements',
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: Colors.white,
+                            shadows: const [
+                              Shadow(
+                                color: KidColors.ink,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                    ),
                     for (final a in AchievementEngine.all)
-                      ListTile(
+                      Container(
                         key: TestIds.achievementTile(a.id),
-                        tileColor: Colors.white70,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        minVerticalPadding: 12,
-                        leading: Icon(
+                        margin: const EdgeInsets.symmetric(vertical: 6),
+                        padding: const EdgeInsets.all(12),
+                        decoration: _cardDecoration(
                           profile.data.unlockedAchievements.contains(a.id)
-                              ? Icons.emoji_events
-                              : Icons.lock_outline,
-                          color:
+                              ? KidColors.sun
+                              : KidColors.ocean,
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
                               profile.data.unlockedAchievements.contains(a.id)
-                              ? Colors.amber
-                              : null,
+                                  ? '\u{1F3C5}'
+                                  : '\u{1F512}',
+                              style: const TextStyle(fontSize: 30),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    a.title,
+                                    style: const TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w900,
+                                      color: KidColors.ink,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${a.description}  (${a.valueIn(stats).clamp(0, a.target)}/${a.target})',
+                                    style: const TextStyle(
+                                      color: KidColors.ink,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Text(
+                              '\u{1FA99} +${a.reward}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w900,
+                                color: KidColors.ink,
+                              ),
+                            ),
+                          ],
                         ),
-                        title: Text(a.title),
-                        subtitle: Text(
-                          '${a.description}  (${a.valueIn(stats).clamp(0, a.target)}/${a.target})',
-                        ),
-                        trailing: Text('+${a.reward}'),
                       ),
                   ],
                 ],
@@ -144,20 +201,11 @@ class ChallengesScreen extends StatelessWidget {
   }
 }
 
-class _Heading extends StatelessWidget {
-  const _Heading(this.text);
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 4, top: 4),
-    child: Text(
-      text,
-      style: const TextStyle(
-        fontSize: 24,
-        fontWeight: FontWeight.w900,
-        color: KidColors.ink,
-      ),
-    ),
-  );
-}
+BoxDecoration _cardDecoration(Color accent) => BoxDecoration(
+  color: Colors.white,
+  borderRadius: BorderRadius.circular(24),
+  border: Border.all(color: accent, width: 4),
+  boxShadow: const [
+    BoxShadow(color: Colors.black26, offset: Offset(0, 4), blurRadius: 6),
+  ],
+);
