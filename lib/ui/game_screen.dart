@@ -137,8 +137,23 @@ class _GameScreenState extends State<GameScreen> {
       barrierColor: Colors.transparent,
       builder: (ctx) => AlertDialog(
         key: TestIds.gameOverDialog,
+        // Pinned to the top, with no dimming, so the play field stays visible; a bright
+        // themed card instead of a dull dark panel.
         alignment: Alignment.topCenter,
         insetPadding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        backgroundColor: Theme.of(ctx).colorScheme.primaryContainer,
+        surfaceTintColor: Colors.transparent,
+        elevation: 12,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: Theme.of(ctx).colorScheme.primary, width: 2),
+        ),
+        titleTextStyle: Theme.of(ctx).textTheme.titleLarge?.copyWith(
+          color: Theme.of(ctx).colorScheme.onPrimaryContainer,
+          fontWeight: FontWeight.w800,
+        ),
+        contentTextStyle: Theme.of(ctx).textTheme.bodyMedium
+            ?.copyWith(color: Theme.of(ctx).colorScheme.onPrimaryContainer),
         titlePadding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
         contentPadding: const EdgeInsets.fromLTRB(20, 4, 20, 0),
         actionsPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
