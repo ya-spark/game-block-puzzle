@@ -74,15 +74,12 @@ class PuzzleLayout {
   (double, double) cellCenter(int row, int col) =>
       (boardLeft + cellSize * (col + 0.5), boardTop + cellSize * (row + 0.5));
 
-  /// While dragging, the piece floats this far above the finger so it stays visible.
-  double get dragLift => cellSize * 1.6;
-
   /// Finger position that makes a piece of [pieceRows]x[pieceCols] snap with its top-left on
-  /// board cell [row],[col]. Used by the integration test bot.
+  /// board cell [row],[col], for a drag that started on the piece centre. Used by the test bot.
   (double, double) fingerFor(int pieceRows, int pieceCols, int row, int col) =>
       (
         boardLeft + (col + pieceCols / 2) * cellSize,
-        boardTop + (row + pieceRows / 2) * cellSize + dragLift,
+        boardTop + (row + pieceRows / 2) * cellSize,
       );
 
   /// Snaps a dragged piece's top-left (screen px) to the nearest board cell.
