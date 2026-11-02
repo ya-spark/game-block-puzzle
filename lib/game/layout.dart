@@ -9,17 +9,30 @@ class PuzzleLayout {
     this.traySlots = 3,
   }) {
     final margin = width * 0.04;
-    cellSize = (width - margin * 2) / gridSize;
-    boardLeft = margin;
     boardTop = min(height * 0.06, 60);
+    // Vertical budget in cells: board, gap, piece tray, and the free strip under the
+    // pieces. The strip is where thumbs rest to start a drag, so it is never squeezed out:
+    // on short screens the whole board shrinks instead.
+    const needed = 8 + 0.5 + 3.2 + bottomGapCells;
+    cellSize = min(
+      (width - margin * 2) / gridSize,
+      (height - boardTop - margin) / (needed - 8 + gridSize),
+    );
+    boardLeft = (width - cellSize * gridSize) / 2;
     final boardBottom = boardTop + cellSize * gridSize;
     // Tray slots share the area under the board.
-    trayTop = boardBottom + cellSize * 0.8;
-    trayHeight = max(cellSize * 3.2, height - trayTop - margin);
-    slotWidth = (width - margin * 2) / traySlots;
+    trayTop = boardBottom + cellSize * 0.5;
+    trayHeight = max(
+      cellSize * (3.2 + bottomGapCells),
+      height - trayTop - margin,
+    );
+    slotWidth = cellSize * gridSize / traySlots;
     // Pieces in the tray are drawn smaller than board cells.
     trayCellSize = min(cellSize * 0.62, slotWidth / 5.5);
   }
+
+  /// Free space kept under the tray pieces, in board cells.
+  static const double bottomGapCells = 1.2;
 
   final double width;
   final double height;
@@ -37,8 +50,10 @@ class PuzzleLayout {
   double get boardSizePx => cellSize * gridSize;
 
   /// Center of a tray slot.
-  (double, double) trayCenter(int slot) =>
-      (boardLeft + slotWidth * (slot + 0.5), trayTop + trayHeight / 2);
+  (double, double) trayCenter(int slot) => (
+    boardLeft + slotWidth * (slot + 0.5),
+    trayTop + (trayHeight - cellSize * bottomGapCells) / 2,
+  );
 
   /// Which tray slot a point is in, or null.
   int? traySlotAt(double x, double y) {
