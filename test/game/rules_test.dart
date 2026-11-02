@@ -135,25 +135,28 @@ void main() {
       }
     });
 
-    test('mid score: every dealt piece fits the board', () {
+    test('high score: every dealt piece still fits the board', () {
       final board = crowded();
-      final gen = PieceGenerator(Random(12));
-      for (var i = 0; i < 40; i++) {
-        final tray = gen.dealTray(board, score: PieceGenerator.easyUntil);
+      final gen = PieceGenerator(Random(13));
+      for (var i = 0; i < 200; i++) {
+        final tray = gen.dealTray(board, score: 100000);
         expect(tray.every(board.canPlaceAnywhere), isTrue);
       }
     });
 
-    test('high score: only one playable piece is guaranteed, and sometimes only one', () {
-      final board = crowded();
-      final gen = PieceGenerator(Random(13));
-      var withDeadPiece = 0;
-      for (var i = 0; i < 200; i++) {
-        final tray = gen.dealTray(board, score: PieceGenerator.mediumUntil);
-        expect(tray.any(board.canPlaceAnywhere), isTrue);
-        if (!tray.every(board.canPlaceAnywhere)) withDeadPiece++;
+    test('higher score deals bigger pieces on average', () {
+      double avgSize(int score) {
+        final gen = PieceGenerator(Random(15));
+        var total = 0;
+        for (var i = 0; i < 300; i++) {
+          total += gen
+              .dealTray(Board.empty(), score: score)
+              .fold(0, (a, p) => a + p.size);
+        }
+        return total / 900;
       }
-      expect(withDeadPiece, greaterThan(0));
+
+      expect(avgSize(PieceGenerator.hardAt), greaterThan(avgSize(0) + 0.5));
     });
 
     test('dealing on a mostly empty board is fast', () {

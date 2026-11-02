@@ -21,36 +21,40 @@ class PieceGenerator {
     return list.last.piece;
   }
 
-  /// Score below which every dealt tray can be played out completely.
+  /// Score below which a dealt tray can also be played out completely, one piece after another.
   static const int easyUntil = 1000;
 
-  /// Score below which every dealt piece fits the board on its own.
-  static const int mediumUntil = 3000;
+  /// Score at which the shape bias towards big pieces is at its maximum.
+  static const int hardAt = 5000;
 
-  /// Three pieces for [board]. Difficulty grows with [score]:
-  /// - below [easyUntil]: all pieces can be placed one after another (some order, no dead piece);
-  /// - below [mediumUntil]: every piece fits the board on its own, but not necessarily all together;
-  /// - above: at least one piece fits, so the player can be forced to play around a dead piece.
-  /// Each tier falls back to the next easier one if no such tray turns up in 50 tries.
+  /// Three pieces for [board]. Every piece fits the board on its own whenever any piece does,
+  /// at every score: a dead piece is only dealt when the board is almost full.
+  ///
+  /// Difficulty grows with [score] through the shapes: small pieces are favoured at the start,
+  /// big awkward ones later. Below [easyUntil] the three pieces can also all be placed one
+  /// after another (tried 50 times, then relaxed).
   List<Piece> dealTray(Board board, {int count = 3, int score = 0}) {
-    // Pieces that fit the board on their own, so the stricter tiers draw from them directly
-    // instead of hoping three random pieces all fit a crowded board.
     final fitting = [
       for (final w in PieceCatalog.weighted)
         if (board.canPlaceAnywhere(w.piece)) w,
     ];
-    final tiers =
-        <(List<({Piece piece, int weight})>?, bool Function(List<Piece>))>[
-          if (score < easyUntil && fitting.isNotEmpty)
-            (fitting, (t) => _playableInSequence(board, t)),
-          if (score < mediumUntil && fitting.isNotEmpty) (fitting, (_) => true),
-          (null, (t) => t.any(board.canPlaceAnywhere)),
-        ];
-    for (final (pool, accept) in tiers) {
-      for (var attempt = 0; attempt < 50; attempt++) {
-        final tray = [for (var i = 0; i < count; i++) _pickWeighted(pool)];
-        if (accept(tray)) return tray;
+    if (fitting.isNotEmpty) {
+      // size^bias: -0.5 at score 0 (small pieces more likely) up to +2 at [hardAt].
+      final bias = -0.5 + 2.5 * min(1.0, score / hardAt);
+      final pool = [
+        for (final w in fitting)
+          (
+            piece: w.piece,
+            weight: max(1, (w.weight * pow(w.piece.size, bias)).round()),
+          ),
+      ];
+      if (score < easyUntil) {
+        for (var attempt = 0; attempt < 50; attempt++) {
+          final tray = [for (var i = 0; i < count; i++) _pickWeighted(pool)];
+          if (_playableInSequence(board, tray)) return tray;
+        }
       }
+      return [for (var i = 0; i < count; i++) _pickWeighted(pool)];
     }
     // Board nearly full: fall back to the smallest piece so the player is not dealt a dead hand.
     return [
