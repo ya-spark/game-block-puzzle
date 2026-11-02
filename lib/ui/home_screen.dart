@@ -1,11 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/services.dart';
-import 'challenges_screen.dart';
-import 'daily_reward_screen.dart';
-import 'game_screen.dart';
-import 'settings_screen.dart';
-import 'shop_screen.dart';
+import 'routes.dart';
 import 'test_ids.dart';
 import 'widgets.dart';
 
@@ -36,9 +32,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _open(Widget screen) =>
-      Navigator.of(context)
-          .push(MaterialPageRoute<void>(builder: (_) => screen));
+  void _open(String route) => Navigator.of(context).pushNamed(route);
 
   @override
   Widget build(BuildContext context) {
@@ -111,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                         label: 'Play!',
                         icon: Icons.play_circle_fill,
                         primary: true,
-                        onPressed: () => _open(const GameScreen()),
+                        onPressed: () => _open(AppRoutes.play),
                       ),
                       if (s.config.retention.dailyReward)
                         MenuButton(
@@ -120,7 +114,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           icon: Icons.card_giftcard,
                           colors: const [Color(0xFFFF8FB1), KidColors.coral],
                           badge: profile.dailyRewardAvailable,
-                          onPressed: () => _open(const DailyRewardScreen()),
+                          onPressed: () => _open(AppRoutes.dailyReward),
                         ),
                       if (s.config.retention.dailyChallenges ||
                           s.config.retention.achievements)
@@ -130,21 +124,21 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                           icon: Icons.flag_circle,
                           colors: const [Color(0xFFB79CFF), KidColors.grape],
                           badge: claimable,
-                          onPressed: () => _open(const ChallengesScreen()),
+                          onPressed: () => _open(AppRoutes.challenges),
                         ),
                       MenuButton(
                         key: TestIds.homeShop,
                         label: 'Shop',
                         icon: Icons.shopping_basket,
                         colors: const [Color(0xFF6BEBB0), Color(0xFF1FB57A)],
-                        onPressed: () => _open(const ShopScreen()),
+                        onPressed: () => _open(AppRoutes.shop),
                       ),
                       MenuButton(
                         key: TestIds.homeSettings,
                         label: 'Settings',
                         icon: Icons.settings,
                         colors: const [Color(0xFFB0BEC5), Color(0xFF78909C)],
-                        onPressed: () => _open(const SettingsScreen()),
+                        onPressed: () => _open(AppRoutes.settings),
                       ),
                     ],
                   ),

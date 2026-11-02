@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'core/services.dart';
-import 'ui/home_screen.dart';
+import 'ui/routes.dart';
 
 class GameApp extends StatelessWidget {
   const GameApp({super.key, required this.services});
@@ -23,7 +23,8 @@ class GameApp extends StatelessWidget {
             brightness: cfg.themeDark ? Brightness.dark : Brightness.light,
           ).copyWith(surface: cfg.themeDark ? const Color(0xFF0F2430) : null),
         ),
-        home: const HomeScreen(),
+        initialRoute: AppRoutes.home,
+        onGenerateRoute: AppRoutes.onGenerateRoute,
       ),
     );
   }
