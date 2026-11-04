@@ -101,9 +101,7 @@ class PuzzleLayout {
         boardTop + (row + pieceRows) * cellSize + dragLift,
       );
 
-  /// Snaps a dragged piece's top-left (screen px) to the nearest board cell.
-  (int, int) snapTopLeft(double x, double y) => (
-    ((y - boardTop) / cellSize).round(),
-    ((x - boardLeft) / cellSize).round(),
-  );
+  /// A dragged piece's top-left (screen px) in unrounded board cell units: (row, col).
+  (double, double) topLeftInCells(double x, double y) =>
+      ((y - boardTop) / cellSize, (x - boardLeft) / cellSize);
 }

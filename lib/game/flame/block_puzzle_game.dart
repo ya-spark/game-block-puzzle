@@ -10,6 +10,7 @@ import '../layout.dart';
 import '../rules/game_state.dart';
 import '../rules/piece.dart';
 import '../rules/piece_generator.dart';
+import '../rules/snap.dart';
 
 /// Flame renderer for the block puzzle. All rules live in [GameState] (pure Dart);
 /// this class only draws and translates drags into `state.place(...)`.
@@ -161,8 +162,9 @@ class PuzzleView extends PositionComponent
     if (slot == null) return;
     final piece = game.state.tray[slot];
     if (piece == null) return;
-    final (r, c) = _dragTopLeftCell(piece);
-    game._handlePlace(slot, r, c);
+    final cell = _dragTopLeftCell(piece);
+    if (cell == null) return;
+    game._handlePlace(slot, cell.$1, cell.$2);
   }
 
   /// Screen top-left of the dragged piece: horizontally it keeps the offset of the press from
@@ -176,9 +178,11 @@ class PuzzleView extends PositionComponent
     );
   }
 
-  (int, int) _dragTopLeftCell(Piece piece) {
+  /// The cell the piece will land on (shared by ghost and drop), or null to cancel.
+  (int, int)? _dragTopLeftCell(Piece piece) {
     final (x, y) = _draggedTopLeft(piece);
-    return layout.snapTopLeft(x, y);
+    final (fy, fx) = layout.topLeftInCells(x, y);
+    return snapToLegalCell(game.state.board, piece, fy, fx);
   }
 
   // ---- drawing ------------------------------------------------------------
@@ -245,8 +249,9 @@ class PuzzleView extends PositionComponent
     if (slot != null) {
       final piece = game.state.tray[slot];
       if (piece != null) {
-        final (r, c) = _dragTopLeftCell(piece);
-        if (board.canPlace(piece, r, c)) {
+        final cell = _dragTopLeftCell(piece);
+        if (cell != null) {
+          final (r, c) = cell;
           final ghost = Paint()
             ..color = palette[piece.colorIndex].withAlpha(90);
           for (final (dr, dc) in piece.cells) {

@@ -6,6 +6,7 @@ import 'package:block_puzzle/game/rules/board.dart';
 import 'package:block_puzzle/game/rules/game_state.dart';
 import 'package:block_puzzle/game/rules/piece.dart';
 import 'package:block_puzzle/game/rules/piece_generator.dart';
+import 'package:block_puzzle/game/rules/snap.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Piece p(String id) => PieceCatalog.byId(id);
@@ -373,7 +374,58 @@ void main() {
       // Reconstruct the piece top-left the way the view does.
       final tlX = fx - 3 * l.cellSize / 2;
       final tlY = fy - l.dragLift - 2 * l.cellSize;
-      expect(l.snapTopLeft(tlX, tlY), (4, 1));
+      final (cy, cx) = l.topLeftInCells(tlX, tlY);
+      expect(cy, closeTo(4, 1e-9));
+      expect(cx, closeTo(1, 1e-9));
+      expect(snapToLegalCell(Board.empty(), p('bar3_0'), cy, cx), (4, 1));
+    });
+  });
+
+  group('snapToLegalCell', () {
+    final dot = PieceCatalog.dot;
+
+    test('exact drop is unchanged', () {
+      expect(snapToLegalCell(Board.empty(), dot, 3, 4), (3, 4));
+    });
+
+    test('occupied nearest cell lands on a free neighbour within 1.0', () {
+      final b = Board.empty().place(dot, 3, 4).board;
+      // Nearest cell (3,4) is taken; (3,5) is 0.7 away horizontally.
+      expect(snapToLegalCell(b, dot, 3.0, 4.3), (3, 5));
+    });
+
+    test('only legal cell farther than 1.0 rejects the drop', () {
+      final one = Board.fromRows([
+        'XXXXXXXX',
+        'XXXXXXXX',
+        'XXXXXXXX',
+        'XXXXXXXX',
+        'XXXXXXXX',
+        'XXXXXXXX',
+        'XXXXXXXX',
+        'XXXXXXX.',
+      ]);
+      expect(snapToLegalCell(one, dot, 7, 5.9), isNull); // 1.1 away
+      expect(snapToLegalCell(one, dot, 7, 6.1), (7, 7)); // 0.9 away
+    });
+
+    test('tie goes to the line-clearing cell', () {
+      final b = Board.fromRows([
+        '........',
+        'XX.XXXXX',
+        '........',
+        '........',
+        '........',
+        '........',
+        '........',
+        '........',
+      ]);
+      // (0,2) and (1,2) are equally close; only (1,2) clears row 1.
+      expect(snapToLegalCell(b, dot, 0.5, 2), (1, 2));
+    });
+
+    test('tie without line clears prefers the smaller row, then column', () {
+      expect(snapToLegalCell(Board.empty(), dot, 0.5, 0.5), (0, 0));
     });
   });
 

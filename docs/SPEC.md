@@ -61,8 +61,9 @@ Code: `lib/game/layout.dart` and `lib/game/flame/block_puzzle_game.dart`. `cell`
 - Pressing anywhere from 0.25 cell above the tray down to the bottom of the screen, across the full width, picks the tray slot under the press. Thumbs press below the piece, not on it (`traySlotAt`).
 - Vertical offset: the dragged piece's bottom edge floats **2.5 cells** above the finger, wherever the press landed (`dragLift = cell * 2.5`).
 - Horizontal offset: the press keeps its horizontal distance from the piece centre for the whole drag, so a press left of the piece keeps the piece to the right of the finger and it never jumps (`_grabX`).
-- Release snaps the piece's top-left to the nearest board cell (`snapTopLeft`, rounding). A translucent ghost of the piece shows the snap cell when the placement is legal.
-- An illegal drop returns the piece to the tray.
+- Release snaps to the nearest **legal** placement, not the nearest cell (`snapToLegalCell` in `lib/game/rules/snap.dart`, pure Dart). With the piece's top-left in unrounded cell units `(fy, fx)` (`PuzzleLayout.topLeftInCells`), candidates are all `(r, c)` with Euclidean distance `<= snapTolerance = 1.0` cell for which `Board.canPlace` is true. The nearest wins; ties go to the candidate that clears more lines, then the smaller row, then the smaller column.
+- No legal candidate within 1.0 cell: the drop is a cancel and the piece returns to the tray.
+- The ghost preview and the drop call the same function, so the translucent ghost always shows exactly where the piece will land, including on near-misses.
 
 **Layout** (portrait)
 - Side margin 4% of width; top padding `min(6% of height, 60)`.
