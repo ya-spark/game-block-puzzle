@@ -3,6 +3,8 @@
 Flutter + Flame Android game template of the game-factory. Sample game: **Block Puzzle**
 (8x8 grid, three pieces, drag and drop). Game repos are generated from this folder.
 
+This game is changed only through `game-studio`.
+
 ```
 lib/core/        service interfaces + v1 implementations (ads, billing, saves, retention, ...)
 lib/core/retention/   daily reward, streaks (+freeze), daily challenges, achievements (pure Dart)
