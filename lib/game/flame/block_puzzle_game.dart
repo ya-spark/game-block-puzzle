@@ -25,7 +25,8 @@ class BlockPuzzleGame extends FlameGame {
   }) : _generator = generator,
        _background = background ?? const Color(0x00000000) {
     state =
-        initialState ?? GameState(bestScore: bestScore, generator: generator);
+        initialState ??
+        GameState.newGame(bestScore: bestScore, generator: generator);
   }
 
   final int bestScore;
@@ -56,7 +57,10 @@ class BlockPuzzleGame extends FlameGame {
   }
 
   void restart() {
-    state = GameState(bestScore: state.bestScore, generator: _generator);
+    state = GameState.newGame(
+      bestScore: state.bestScore,
+      generator: _generator,
+    );
     view.cancelDrag();
     onChanged?.call();
   }

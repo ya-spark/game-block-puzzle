@@ -196,7 +196,7 @@ void main() {
 
   group('AchievementEngine', () {
     test('unlocks when thresholds are reached, once', () {
-      const stats = LifetimeStats(gamesPlayed: 1, bestScore: 1200);
+      const stats = LifetimeStats(gamesPlayed: 1, bestScore: 6000);
       final first = AchievementEngine.newlyUnlocked(stats, {});
       expect(first.map((a) => a.id), containsAll(['first_game', 'score_1000']));
       final again = AchievementEngine.newlyUnlocked(

@@ -113,7 +113,7 @@ abstract final class DailyChallengeEngine {
     ChallengeTemplate(
       ChallengeKind.scorePoints,
       'Score {n} points in one game',
-      [300, 600, 1000],
+      [1500, 3000, 5000],
       [20, 40, 80],
       isMax: true,
     ),

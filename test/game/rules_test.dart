@@ -116,7 +116,7 @@ void main() {
     );
   });
 
-  group('PieceGenerator difficulty by score', () {
+  group('PieceGenerator difficulty by lines cleared', () {
     // A crowded board: two 1x1 holes and a 2x2 hole, so many pieces do not fit.
     Board crowded() {
       final rows = List.filled(8, '########');
@@ -127,42 +127,66 @@ void main() {
       return Board.fromRows(rows);
     }
 
-    test('low score: every dealt piece fits the board', () {
+    test('every dealt piece fits on its own, at any number of lines', () {
       final board = crowded();
-      final gen = PieceGenerator(Random(11));
-      for (var i = 0; i < 40; i++) {
-        final tray = gen.dealTray(board, score: 0);
-        expect(tray.every(board.canPlaceAnywhere), isTrue);
+      for (final lines in [0, 10, 30, 59, 60, 200]) {
+        for (var seed = 0; seed < 40; seed++) {
+          final gen = PieceGenerator(Random(seed));
+          final tray = gen.dealTray(board, linesCleared: lines);
+          expect(tray.every(board.canPlaceAnywhere), isTrue);
+        }
       }
     });
 
-    test('high score: every dealt piece still fits the board', () {
-      final board = crowded();
-      final gen = PieceGenerator(Random(13));
-      for (var i = 0; i < 200; i++) {
-        final tray = gen.dealTray(board, score: 100000);
-        expect(tray.every(board.canPlaceAnywhere), isTrue);
-      }
-    });
-
-    test('higher score deals bigger pieces on average', () {
+    test('share of 4-cell pieces is about the same early and late', () {
       // More than half full, so small pieces are not filtered out as on a roomy board.
       final board = Board.fromRows([
         for (var i = 0; i < 5; i++) '#######.',
         ...List.filled(3, '........'),
       ]);
-      double avgSize(int score) {
-        final gen = PieceGenerator(Random(15));
-        var total = 0;
-        for (var i = 0; i < 300; i++) {
-          total += gen
-              .dealTray(board, score: score)
-              .fold(0, (a, p) => a + p.size);
+      double share(int lines) {
+        var four = 0, total = 0;
+        for (var seed = 0; seed < 300; seed++) {
+          final gen = PieceGenerator(Random(seed));
+          for (final p in gen.dealTray(board, linesCleared: lines)) {
+            total++;
+            if (p.size == 4) four++;
+          }
         }
-        return total / 900;
+        return four / total;
       }
 
-      expect(avgSize(PieceGenerator.hardAt), greaterThan(avgSize(0) + 0.5));
+      final early = share(0), late = share(100);
+      expect((early - late).abs(), lessThan(0.05));
+      expect(late, greaterThan(0.5)); // 4-cell pieces are preferred
+    });
+
+    test('trays below 20 lines can be played out one after another', () {
+      final board = Board.fromRows([
+        for (var i = 0; i < 5; i++) '#######.',
+        ...List.filled(3, '........'),
+      ]);
+      bool playable(Board b, List<Piece> ps) {
+        if (ps.isEmpty) return true;
+        for (var i = 0; i < ps.length; i++) {
+          final rest = [...ps.sublist(0, i), ...ps.sublist(i + 1)];
+          for (var r = 0; r < 8; r++) {
+            for (var c = 0; c < 8; c++) {
+              if (b.canPlace(ps[i], r, c) &&
+                  playable(b.place(ps[i], r, c).board, rest)) {
+                return true;
+              }
+            }
+          }
+        }
+        return false;
+      }
+
+      for (var seed = 0; seed < 60; seed++) {
+        final tray = PieceGenerator(Random(seed))
+            .dealTray(board, linesCleared: 5);
+        expect(playable(board, tray), isTrue, reason: 'seed $seed');
+      }
     });
 
     test('a roomy board is never dealt pieces under three cells', () {
@@ -178,7 +202,7 @@ void main() {
       final gen = PieceGenerator(Random(14));
       final sw = Stopwatch()..start();
       for (var i = 0; i < 200; i++) {
-        gen.dealTray(Board.empty(), score: 0);
+        gen.dealTray(Board.empty());
       }
       expect(sw.elapsedMilliseconds, lessThan(2000));
     });

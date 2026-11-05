@@ -84,13 +84,13 @@ void main() {
     await p.init();
     final unlocked = await p.recordGameFinished(
       const GameSummary(
-        score: 1500,
+        score: 6000,
         linesCleared: 6,
         piecesPlaced: 20,
         maxCombo: 3,
       ),
     );
-    expect(p.data.bestScore, 1500);
+    expect(p.data.bestScore, 6000);
     expect(p.data.stats.gamesPlayed, 1);
     expect(unlocked.map((a) => a.id), contains('first_game'));
     expect(unlocked.map((a) => a.id), contains('score_1000'));

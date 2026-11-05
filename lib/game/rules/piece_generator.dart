@@ -3,15 +3,36 @@ import 'dart:math';
 import 'board.dart';
 import 'piece.dart';
 
-/// Deals pieces. Guarantees every dealt tray has at least one piece that fits when any move
-/// is still possible, so a game never ends by a bad deal alone. Seedable for tests.
+/// Deals pieces. Every dealt piece fits the board on its own whenever any piece does, so a
+/// game never ends by a bad deal alone. Seedable for tests.
 class PieceGenerator {
   PieceGenerator([Random? random]) : _rng = random ?? Random();
 
   final Random _rng;
 
-  Piece _pickWeighted([List<({Piece piece, int weight})>? from]) {
-    final list = from ?? PieceCatalog.weighted;
+  /// The random source (also used to prepare the start board of a new game).
+  Random get random => _rng;
+
+  /// Soft preference for 4-cell pieces: weight 3 against 1 for every other shape.
+  static const int fourCellWeight = 3;
+
+  /// Lines cleared below which every deal is kind (all three pieces playable one after
+  /// another, and one of them clears a line).
+  static const int kindUntilLines = 20;
+
+  /// Lines cleared from which the deal is plain (each piece only has to fit on its own).
+  /// Between [kindUntilLines] and this, half of the deals (random) are kind.
+  static const int plainFromLines = 60;
+
+  /// Attempts at a kind deal before the guarantee is relaxed.
+  static const int kindAttempts = 50;
+
+  /// While at most this share of the board is filled there is plenty of room, so pieces
+  /// smaller than [minRoomySize] cells are not dealt.
+  static const double roomyFilledShare = 0.5;
+  static const int minRoomySize = 3;
+
+  Piece _pickWeighted(List<({Piece piece, int weight})> list) {
     final total = list.fold<int>(0, (s, w) => s + w.weight);
     var roll = _rng.nextInt(total);
     for (final w in list) {
@@ -21,24 +42,15 @@ class PieceGenerator {
     return list.last.piece;
   }
 
-  /// Score below which a dealt tray can also be played out completely, one piece after another.
-  static const int easyUntil = 50000;
+  static int _weightOf(Piece p) => p.size == 4 ? fourCellWeight : 1;
 
-  /// Score at which the shape bias towards big pieces is at its maximum.
-  static const int hardAt = 500000;
-
-  /// While at most this share of the board is filled there is plenty of room, so pieces
-  /// smaller than [minRoomySize] cells are not dealt.
-  static const double roomyFilledShare = 0.5;
-  static const int minRoomySize = 3;
-
-  /// Three pieces for [board]. Every piece fits the board on its own whenever any piece does,
-  /// at every score: a dead piece is only dealt when the board is almost full.
+  /// Three pieces for [board]. Every piece fits the board on its own whenever any piece does.
   ///
-  /// Difficulty grows with [score] through the shapes: small pieces are favoured at the start,
-  /// big awkward ones later. Below [easyUntil] the three pieces can also all be placed one
-  /// after another (tried 50 times, then relaxed).
-  List<Piece> dealTray(Board board, {int count = 3, int score = 0}) {
+  /// Difficulty rises with [linesCleared] (this game's total) through how kind the deal is:
+  /// below [kindUntilLines] the three pieces can all be played one after another and at least
+  /// one clears a line (tried [kindAttempts] times, then relaxed); up to [plainFromLines]
+  /// half of the deals are kind; after that the deal is plain.
+  List<Piece> dealTray(Board board, {int count = 3, int linesCleared = 0}) {
     final roomy =
         board.filledCount <= board.size * board.size * roomyFilledShare;
     final fitting = [
@@ -48,30 +60,51 @@ class PieceGenerator {
           w,
     ];
     if (fitting.isNotEmpty) {
-      // size^bias: -0.5 at score 0 (small pieces more likely) up to +2 at [hardAt].
-      final bias = -0.5 + 2.5 * min(1.0, score / hardAt);
       final pool = [
-        for (final w in fitting)
-          (
-            piece: w.piece,
-            weight: max(1, (w.weight * pow(w.piece.size, bias)).round()),
-          ),
+        for (final w in fitting) (piece: w.piece, weight: _weightOf(w.piece)),
       ];
-      if (score < easyUntil) {
-        for (var attempt = 0; attempt < 50; attempt++) {
-          final tray = [for (var i = 0; i < count; i++) _pickWeighted(pool)];
+      List<Piece> draw() => [
+        for (var i = 0; i < count; i++) _pickWeighted(pool),
+      ];
+      final kind =
+          linesCleared < kindUntilLines ||
+          (linesCleared < plainFromLines && _rng.nextBool());
+      if (kind) {
+        for (var attempt = 0; attempt < kindAttempts; attempt++) {
+          final tray = draw();
+          if (_clearsALine(board, tray) && _playableInSequence(board, tray)) {
+            return tray;
+          }
+        }
+        for (var attempt = 0; attempt < kindAttempts; attempt++) {
+          final tray = draw();
           if (_playableInSequence(board, tray)) return tray;
         }
       }
-      return [for (var i = 0; i < count; i++) _pickWeighted(pool)];
+      return draw();
     }
     // Board nearly full: fall back to the smallest piece so the player is not dealt a dead hand.
     return [
       for (var i = 0; i < count; i++)
         i == 0 && board.canPlaceAnywhere(PieceCatalog.dot)
             ? PieceCatalog.dot
-            : _pickWeighted(),
+            : _pickWeighted(PieceCatalog.weighted),
     ];
+  }
+
+  /// True when some piece of [pieces] clears a line at some position on [board].
+  bool _clearsALine(Board board, List<Piece> pieces) {
+    for (final piece in pieces) {
+      for (var r = 0; r < board.size; r++) {
+        for (var c = 0; c < board.size; c++) {
+          if (board.canPlace(piece, r, c) &&
+              board.place(piece, r, c).linesCleared > 0) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   /// True when all of [pieces] can be placed one after another in some order, counting the

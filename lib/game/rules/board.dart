@@ -17,6 +17,12 @@ class Board {
   factory Board.empty([int size = 8]) =>
       Board._(size, List.unmodifiable(List<int>.filled(size * size, 0)));
 
+  /// Board from a row-major cell list (0 = empty, n > 0 = color index + 1).
+  factory Board.fromCells(int size, List<int> cells) {
+    assert(cells.length == size * size);
+    return Board._(size, List.unmodifiable(cells));
+  }
+
   factory Board.fromRows(List<String> rows) {
     final size = rows.length;
     final cells = <int>[];
@@ -34,6 +40,7 @@ class Board {
 
   int at(int row, int col) => _cells[row * size + col];
   bool isFilled(int row, int col) => at(row, col) != 0;
+  List<int> get cells => _cells;
   int get filledCount => _cells.where((c) => c != 0).length;
   bool get isEmpty => filledCount == 0;
 

@@ -3,6 +3,7 @@ import 'dart:math';
 import 'board.dart';
 import 'piece.dart';
 import 'piece_generator.dart';
+import 'start_board.dart';
 
 class PlaceOutcome {
   const PlaceOutcome({
@@ -40,9 +41,26 @@ class GameState {
     _checkGameOver();
   }
 
+  /// A fresh game: a prepared, mostly full board (see [StartBoard]) and a first tray whose
+  /// pieces each clear lines. Deterministic for a seeded [generator]. Not used by Continue.
+  factory GameState.newGame({PieceGenerator? generator, int bestScore = 0}) {
+    final gen = generator ?? PieceGenerator();
+    final start = StartBoard.generate(gen.random);
+    return GameState(
+      board: start.board,
+      generator: gen,
+      bestScore: bestScore,
+      tray: start.tray,
+    );
+  }
+
   static const int traySlots = 3;
   static const int maxRevives = 3;
-  static const int maxCombo = 5;
+  static const int maxCombo = 8;
+
+  /// Lines cleared per scoring stage, and the cap of the stage multiplier.
+  static const int linesPerStage = 10;
+  static const int maxStage = 8;
 
   final PieceGenerator _generator;
 
@@ -62,6 +80,9 @@ class GameState {
 
   /// Ad-based revives left in this run (resets with every new [GameState]).
   int get revivesRemaining => maxRevives - revivesUsed;
+
+  /// Stage multiplier for the line bonus: `1 + linesClearedTotal ~/ 10`, at most [maxStage].
+  int get stage => min(1 + linesClearedTotal ~/ linesPerStage, maxStage);
 
   bool get canRevive => isGameOver && revivesUsed < maxRevives;
 
@@ -85,7 +106,7 @@ class GameState {
     var multiplier = 1;
     if (lines > 0) {
       multiplier = min(comboStreak + 1, maxCombo);
-      gained += 10 * lines * lines * multiplier;
+      gained += 10 * lines * lines * multiplier * stage;
       comboStreak++;
       linesClearedTotal += lines;
       maxComboReached = max(maxComboReached, multiplier);
@@ -96,7 +117,9 @@ class GameState {
     if (score > bestScore) bestScore = score;
 
     if (_tray.every((p) => p == null)) {
-      _tray = List<Piece?>.of(_generator.dealTray(board, score: score));
+      _tray = List<Piece?>.of(
+        _generator.dealTray(board, linesCleared: linesClearedTotal),
+      );
     }
     _checkGameOver();
     return PlaceOutcome(
@@ -121,7 +144,9 @@ class GameState {
     if (!canRevive) return false;
     revivesUsed++;
     board = board.clearFullestRows(2);
-    _tray = List<Piece?>.of(_generator.dealTray(board, score: score));
+    _tray = List<Piece?>.of(
+      _generator.dealTray(board, linesCleared: linesClearedTotal),
+    );
     comboStreak = 0;
     _checkGameOver();
     return true;
