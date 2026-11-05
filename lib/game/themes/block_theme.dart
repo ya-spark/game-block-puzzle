@@ -112,12 +112,12 @@ class BlockTheme {
     palette: const [
       Color(0xFFFF9EB5), // strawberry
       Color(0xFFFFF1C9), // vanilla
-      Color(0xFF9B5A3C), // chocolate
+      Color(0xFFD2956A), // chocolate
       Color(0xFFB9E4A1), // pistachio
       Color(0xFFFFB86B), // orange
       Color(0xFFB7A0F2), // blueberry
       Color(0xFF8FD6E8), // mint-blue
-      Color(0xFFE84A5F), // cherry
+      Color(0xFFFF7A8A), // cherry
     ],
     emptyCell: const Color(0xFF4A2D1F),
     gridLine: const Color(0x44FFD9A8),
@@ -131,11 +131,11 @@ class BlockTheme {
     id: 'wood',
     palette: const [
       Color(0xFFC98B4B), // oak
-      Color(0xFF8B5A2B), // walnut
+      Color(0xFFB07B40), // walnut
       Color(0xFFE0B77A), // pine
-      Color(0xFFA0522D), // cherry wood
+      Color(0xFFC4724A), // cherry wood
       Color(0xFFD9A066), // maple
-      Color(0xFF6F4E37), // dark
+      Color(0xFFA07C5A), // dark
       Color(0xFFE8C99B), // birch
       Color(0xFFB5753A), // teak
     ],
@@ -154,14 +154,14 @@ class BlockTheme {
   static final BlockTheme candy = BlockTheme(
     id: 'candy',
     palette: const [
-      Color(0xFFFF4D8D), // raspberry
-      Color(0xFFFF9F1C), // orange
-      Color(0xFFFFE066), // lemon
-      Color(0xFF5BD68A), // lime
-      Color(0xFF4DB6FF), // blue raspberry
-      Color(0xFFB57BFF), // grape
-      Color(0xFFFF6B6B), // cherry
-      Color(0xFF3DDAD7), // mint
+      Color(0xFFC4155A), // raspberry
+      Color(0xFFA84F00), // orange
+      Color(0xFF7A5B00), // lemon
+      Color(0xFF106A36), // lime
+      Color(0xFF1565B0), // blue raspberry
+      Color(0xFF6D32C4), // grape
+      Color(0xFFBE2424), // cherry
+      Color(0xFF0B6B68), // mint
     ],
     emptyCell: const Color(0xFFF7D6E6),
     gridLine: const Color(0x55FFFFFF),
@@ -183,11 +183,11 @@ class BlockTheme {
       Color(0xFFF7C6D0), // pink pearl
       Color(0xFFFFE9B0), // sand
       Color(0xFFA6E3E9), // aqua
-      Color(0xFFC7B6F2), // lilac
+      Color(0xFFD6CAF8), // lilac
       Color(0xFFFFB38A), // coral
       Color(0xFF9FE0B0), // sea green
       Color(0xFFFFFFFF), // white pearl
-      Color(0xFF7FB8F5), // blue
+      Color(0xFFA3CEFF), // blue
     ],
     emptyCell: const Color(0xFF123A66),
     gridLine: const Color(0x4400E5FF),
@@ -355,6 +355,36 @@ void _mark(Canvas canvas, Rect r, int index, {Color? color}) {
   }
 }
 
+/// Rounded-square base tile that fills the whole cell (1 unit grid gap, corner radius 16 % of
+/// the cell), tinted from the dark shade of [color], with a 1.5 unit outline at 45 % black and
+/// a 1 unit light inner edge on the top and left at 35 % white. The skin motif is drawn on top.
+void paintBaseTile(Canvas canvas, Rect rect, Color color) {
+  final t = rect.deflate(rect.width * 0.5 / tileUnit);
+  final radius = Radius.circular(t.width * 0.16);
+  final rr = RRect.fromRectAndRadius(t, radius);
+  canvas.drawRRect(rr, Paint()..color = _shade(color, -0.3));
+  final edge = Paint()
+    ..color = const Color(0x59FFFFFF)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1;
+  final e = t.deflate(2);
+  canvas.drawPath(
+    Path()
+      ..moveTo(e.left, e.bottom - t.width * 0.12)
+      ..lineTo(e.left, e.top + t.width * 0.12)
+      ..quadraticBezierTo(e.left, e.top, e.left + t.width * 0.12, e.top)
+      ..lineTo(e.right - t.width * 0.12, e.top),
+    edge,
+  );
+  canvas.drawRRect(
+    RRect.fromRectAndRadius(t.deflate(0.75), radius),
+    Paint()
+      ..color = const Color(0x73000000)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5,
+  );
+}
+
 /// Glossy rounded gem: diagonal gradient, soft edge, specular dot.
 void _gemSkin(Canvas canvas, Rect rect, Color color, int index) {
   final r = rect.deflate(rect.width * 0.03);
@@ -386,6 +416,7 @@ void _gemSkin(Canvas canvas, Rect rect, Color color, int index) {
 
 /// Biscuit with cream icing and sprinkles.
 void _cakeSkin(Canvas canvas, Rect rect, Color color, int index) {
+  paintBaseTile(canvas, rect, color);
   final r = rect.deflate(2);
   canvas.drawRRect(
     RRect.fromRectAndRadius(r, Radius.circular(r.width * 0.22)),
@@ -422,6 +453,7 @@ void _cakeSkin(Canvas canvas, Rect rect, Color color, int index) {
 
 /// Wooden tile with grain lines.
 void _woodSkin(Canvas canvas, Rect rect, Color color, int index) {
+  paintBaseTile(canvas, rect, color);
   final r = rect.deflate(2);
   final rrect = RRect.fromRectAndRadius(r, Radius.circular(r.width * 0.12));
   canvas.drawRRect(
@@ -464,6 +496,7 @@ void _woodSkin(Canvas canvas, Rect rect, Color color, int index) {
 
 /// Glossy gumdrop sweet.
 void _candySkin(Canvas canvas, Rect rect, Color color, int index) {
+  paintBaseTile(canvas, rect, color);
   final r = rect.deflate(2);
   final rrect = RRect.fromRectAndRadius(r, Radius.circular(r.width * 0.42));
   canvas.drawRRect(
@@ -498,6 +531,7 @@ void _candySkin(Canvas canvas, Rect rect, Color color, int index) {
 
 /// Pearly shell with fan ridges.
 void _shellSkin(Canvas canvas, Rect rect, Color color, int index) {
+  paintBaseTile(canvas, rect, color);
   final r = rect.deflate(2);
   final rrect = RRect.fromRectAndRadius(r, Radius.circular(r.width * 0.3));
   canvas.drawRRect(
@@ -543,8 +577,9 @@ void _shellSkin(Canvas canvas, Rect rect, Color color, int index) {
 
 /// Round planet with a ring and craters.
 void _planetSkin(Canvas canvas, Rect rect, Color color, int index) {
+  paintBaseTile(canvas, rect, color);
   final c = rect.center;
-  final rad = rect.width * 0.4;
+  final rad = rect.width * 0.415;
   final ring = Paint()
     ..style = PaintingStyle.stroke
     ..strokeWidth = 3.5
