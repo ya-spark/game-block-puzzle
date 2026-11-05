@@ -24,6 +24,8 @@ its source and license. `scripts/check_asset_licenses.sh` fails CI otherwise.
 | assets/voice/well_done_02.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
 | assets/voice/you_did_it.mp3 | AI-generated narration (voice "david") | project-owned (confirm TTS provider's commercial terms) | own-made, ya-spark |
 | assets/ambience/morning_birds.mp3 | Pixabay Sound Effects (pixabay.com/sound-effects), author nickype, Pixabay file id 146832; converted to mono 64 kbps MP3 with a crossfaded loop point | Pixabay Content License (royalty-free, commercial use allowed; confirmed by owner) | not wired into the game yet; page URL not recorded |
+| assets/ambience/before_sunrise.mp3 | Pixabay Sound Effects (pixabay.com/sound-effects), author dbsound, Pixabay file id 246785; converted to mono 64 kbps MP3 with a crossfaded loop point | Pixabay Content License (royalty-free, commercial use allowed; confirmed by owner) | not wired into the game yet; page URL not recorded |
+| assets/ambience/heartbeat.mp3 | Pixabay Sound Effects (pixabay.com/sound-effects), author Dragon Studio, Pixabay file id 372448; converted to mono 64 kbps MP3 with a crossfaded loop point | Pixabay Content License (royalty-free, commercial use allowed; confirmed by owner) | not wired into the game yet; page URL not recorded |
 
 Format for an asset row: `| assets/sfx/pop.ogg | https://example.org/pop | CC0-1.0 | by Jane Doe |`
 
