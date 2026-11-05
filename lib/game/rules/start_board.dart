@@ -28,19 +28,31 @@ class StartBoard {
     }
     // Unreachable in practice: an empty board with a plain tray.
     return StartBoard(Board.empty(size), [
-      PieceCatalog.byId('square2_0'),
-      PieceCatalog.byId('bar4_0'),
+      PieceCatalog.byId('z4_0'),
+      PieceCatalog.byId('j4_0'),
       PieceCatalog.byId('t4_0'),
     ]);
   }
 
   static StartBoard? _attempt(Random rng, int size, int lines) {
-    // The start tray uses the original L, T and S shapes only (not Z and J), which keeps the
-    // seeded start boards and their tests unchanged.
+    // First tray: at least two Z or J pieces, the third any 4-cell piece, no piece (same id)
+    // more than twice. Each piece must clear lines on the board, so each is placeable.
     final fours = [
       for (final p in PieceCatalog.all)
-        if (p.size == 4 && !p.id.startsWith('z4') && !p.id.startsWith('j4')) p,
+        if (p.size == 4) p,
     ];
+    final zj = [
+      for (final p in fours)
+        if (p.id.startsWith('z4') || p.id.startsWith('j4')) p,
+    ];
+    final picks = [
+      zj[rng.nextInt(zj.length)],
+      zj[rng.nextInt(zj.length)],
+      fours[rng.nextInt(fours.length)],
+    ]..shuffle(rng);
+    if (picks.any((p) => picks.where((q) => q.id == p.id).length > 2)) {
+      return null;
+    }
     final byRows = rng.nextBool();
     final cells = List<int>.filled(size * size, 0);
     final holes = <int>{};
@@ -50,7 +62,7 @@ class StartBoard {
     final toFill = <int>{};
 
     for (var k = 0; k < 3; k++) {
-      final piece = fours[rng.nextInt(fours.length)];
+      final piece = picks[k];
       final r0 = rng.nextInt(size - piece.height + 1);
       final c0 = rng.nextInt(size - piece.width + 1);
       final mine = {
