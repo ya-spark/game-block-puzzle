@@ -6,3 +6,5 @@
 
 Graphics (icon 512x512, feature graphic 1024x500, screenshots) are produced by the asset agent
 and must be recorded in `assets/LICENSES.md` if they use third-party material.
+
+`graphics/feature-graphic-1024x500.png` is drawn by `scripts/gen_feature_graphic.py` (Pillow, original art, no third-party assets). The app icon is `icon_512.png`.
