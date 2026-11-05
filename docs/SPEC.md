@@ -15,7 +15,7 @@ Pure Dart in `lib/game/rules/`.
 - Score per placement: piece size (cells), plus `10 * lines^2 * multiplier` when lines clear.
 - Combo multiplier = consecutive placements that cleared lines, `min(streak + 1, 5)`; a placement with no clear resets it.
 - Game over when none of the remaining tray pieces fits anywhere.
-- Revive: up to 3 per run via a rewarded ad; empties the two fullest rows, deals a fresh tray, resets the combo.
+- Continue (code name "revive"): up to 3 per run via a rewarded ad; empties the two fullest rows, deals a fresh tray, resets the combo.
 - Best score is saved locally (and to the Play Games leaderboard when enabled).
 
 ## 4. Content
@@ -50,7 +50,13 @@ Backend, Firebase, multiplayer, piece rotation, iOS and web builds.
 - Placing a piece on empty cells updates the board and score; an illegal placement is rejected.
 - Filling a row or column clears it and awards the line bonus with the combo multiplier.
 - A dealt tray always contains a piece that fits while any move exists.
-- The game ends when no remaining piece fits; a revive is offered up to 3 times per run.
+- The game ends when no remaining piece fits; a Continue is offered up to 3 times per run.
+
+Game over screen layout:
+- Player-facing wording is "Continue" (code and test IDs still say "revive"); the label is the constant `continueLabel` in `lib/ui/game_screen.dart`. Text: `Continue · N left`, details line `Continues left: N`.
+- Continue: gold primary style, font size 22, padding 28x16, on its own row. Hidden when no continue is left.
+- Play again: secondary style, font size 15, padding 18x9, on the row under Continue next to Home (ghost, unchanged). When Continue is unavailable, Play again takes the large gold style (22, 28x16) on its own row.
+- Test IDs unchanged: `game.over.revive`, `game.over.retry`, `game.over.home`.
 - A drag follows the finger with the offsets in section 13 and the ghost preview shows where it will snap.
 - Debug builds use test ad IDs; release builds do not (CI `ad_safety_check.sh`).
 

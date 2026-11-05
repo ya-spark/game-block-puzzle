@@ -69,11 +69,18 @@ class GameOverPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
+                // Large buttons each get their own row, the rest share a wrapped row below.
+                for (final b in buttons.where(
+                  (b) => b.size == GameOverButtonSize.large,
+                ))
+                  Padding(padding: const EdgeInsets.only(bottom: 8), child: b),
                 Wrap(
                   alignment: WrapAlignment.center,
                   spacing: 10,
                   runSpacing: 8,
-                  children: buttons,
+                  children: buttons
+                      .where((b) => b.size != GameOverButtonSize.large)
+                      .toList(),
                 ),
               ],
             ),
@@ -86,6 +93,10 @@ class GameOverPanel extends StatelessWidget {
 
 enum GameOverButtonKind { primary, secondary, ghost }
 
+/// [large] is the focus action (font 22, padding 28x16, own row); [compact] is the secondary
+/// action (font 15, padding 18x9); [regular] is the default pill.
+enum GameOverButtonSize { large, regular, compact }
+
 /// Glossy pill button: gold for the main action, purple-pink for secondary, glass for ghost.
 class GameOverButton extends StatelessWidget {
   const GameOverButton({
@@ -94,12 +105,14 @@ class GameOverButton extends StatelessWidget {
     required this.onPressed,
     this.icon,
     this.kind = GameOverButtonKind.secondary,
+    this.size = GameOverButtonSize.regular,
   });
 
   final String label;
   final IconData? icon;
   final VoidCallback? onPressed;
   final GameOverButtonKind kind;
+  final GameOverButtonSize size;
 
   @override
   Widget build(BuildContext context) {
@@ -118,6 +131,20 @@ class GameOverButton extends StatelessWidget {
         const [Color(0x40FFFFFF), Color(0x26FFFFFF)],
         Colors.white,
         const Color(0xCCFFFFFF),
+      ),
+    };
+    final (fontSize, padding) = switch (size) {
+      GameOverButtonSize.large => (
+        22.0,
+        const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+      ),
+      GameOverButtonSize.regular => (
+        16.0,
+        const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+      ),
+      GameOverButtonSize.compact => (
+        15.0,
+        const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
       ),
     };
     final enabled = onPressed != null;
@@ -146,24 +173,30 @@ class GameOverButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(28),
             onTap: onPressed,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
+              padding: padding,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (icon != null) ...[
-                    Icon(icon, size: 20, color: fg),
+                    Icon(icon, size: fontSize + 4, color: fg),
                     const SizedBox(width: 6),
                   ],
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: fg,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
-                      shadows: kind == GameOverButtonKind.ghost
-                          ? GameOverPanel.outline
-                          : null,
+                  // Scales down only if the label cannot fit the screen width.
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: fg,
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
+                          shadows: kind == GameOverButtonKind.ghost
+                              ? GameOverPanel.outline
+                              : null,
+                        ),
+                      ),
                     ),
                   ),
                 ],

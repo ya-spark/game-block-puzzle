@@ -188,6 +188,59 @@ void main() {
     expect(find.byKey(TestIds.gameOverDialog), findsNothing);
   });
 
+  for (final canContinue in [true, false]) {
+    testWidgets(
+      'game over: Continue size vs Play again (continue=$canContinue)',
+      (tester) async {
+        final s = await buildFakeServices();
+        tester.view.physicalSize = const Size(400, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        final rows = List.generate(
+          8,
+          (r) => r.isEven ? '.#.#.#.#' : '#.#.#.#.',
+        );
+        final state = GameState(
+          generator: PieceGenerator(Random(1)),
+          board: Board.fromRows(rows),
+          tray: [
+            PieceCatalog.dot,
+            PieceCatalog.byId('bar2_0'),
+            PieceCatalog.byId('square2_0'),
+          ],
+        );
+        if (!canContinue) state.revivesUsed = GameState.maxRevives;
+        final game = BlockPuzzleGame(initialState: state);
+        await tester.pumpWidget(
+          ServicesScope(
+            services: s,
+            child: MaterialApp(home: GameScreen(game: game)),
+          ),
+        );
+        final bot = PuzzleBot(tester);
+        await bot.waitForGame();
+        await bot.drag(0, 0, 0);
+        await settle(tester);
+        expect(find.byKey(TestIds.gameOverRetry), findsOneWidget);
+        expect(find.byKey(TestIds.gameOverHome), findsOneWidget);
+        final retry = tester.getSize(find.byKey(TestIds.gameOverRetry));
+        if (canContinue) {
+          expect(find.byKey(TestIds.gameOverRevive), findsOneWidget);
+          expect(find.text('$continueLabel · 3 left'), findsOneWidget);
+          final cont = tester.getSize(find.byKey(TestIds.gameOverRevive));
+          expect(cont.height, greaterThan(retry.height));
+          expect(cont.width, greaterThan(retry.width));
+        } else {
+          expect(find.byKey(TestIds.gameOverRevive), findsNothing);
+          expect(
+            tester.widget<Text>(find.text('Play again')).style!.fontSize,
+            22,
+          );
+        }
+      },
+    );
+  }
+
   testWidgets(
     'game over: declined revive ad keeps the dialog and plays again',
     (tester) async {

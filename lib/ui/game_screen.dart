@@ -11,6 +11,9 @@ import '../game/rules/game_state.dart';
 import 'game_over_panel.dart';
 import 'test_ids.dart';
 
+/// Player-facing name of the rewarded-ad second chance on the game over screen (rename it here only).
+const String continueLabel = 'Continue';
+
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key, this.game});
 
@@ -146,7 +149,7 @@ class _GameScreenState extends State<GameScreen> {
           Text('Best ${game.state.bestScore}'),
           if (game.state.canRevive)
             Text(
-              'Revives left: ${game.state.revivesRemaining}',
+              'Continues left: ${game.state.revivesRemaining}',
               key: TestIds.gameOverRevivesLeft,
             ),
         ],
@@ -155,8 +158,9 @@ class _GameScreenState extends State<GameScreen> {
             GameOverButton(
               key: TestIds.gameOverRevive,
               kind: GameOverButtonKind.primary,
+              size: GameOverButtonSize.large,
               icon: Icons.smart_display,
-              label: 'Revive · ${game.state.revivesRemaining} left',
+              label: '$continueLabel · ${game.state.revivesRemaining} left',
               onPressed: () => Navigator.pop(ctx, 'revive'),
             ),
           GameOverButton(
@@ -164,6 +168,9 @@ class _GameScreenState extends State<GameScreen> {
             kind: game.state.canRevive
                 ? GameOverButtonKind.secondary
                 : GameOverButtonKind.primary,
+            size: game.state.canRevive
+                ? GameOverButtonSize.compact
+                : GameOverButtonSize.large,
             icon: Icons.replay,
             label: 'Play again',
             onPressed: () => Navigator.pop(ctx, 'retry'),
