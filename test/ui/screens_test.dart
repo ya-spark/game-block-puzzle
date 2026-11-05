@@ -29,7 +29,7 @@ Future<void> pumpApp(WidgetTester tester, Services s) async {
 
 /// pumpAndSettle never returns while the Flame game loop is running.
 Future<void> settle(WidgetTester tester) async {
-  for (var i = 0; i < 10; i++) {
+  for (var i = 0; i < 15; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 }

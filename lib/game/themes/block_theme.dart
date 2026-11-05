@@ -21,6 +21,7 @@ class BlockTheme {
     required this.backgroundTop,
     this.hudText = const Color(0xFFFFFFFF),
     this.hudSubtle = const Color(0xFF7FB7BD),
+    this.hudShadows = const [],
     required this.paintBackground,
     required this.paintSkin,
   }) : assert(palette.length == Piece.colorCount);
@@ -41,6 +42,14 @@ class BlockTheme {
 
   /// Secondary HUD text (the "SCORE" label).
   final Color hudSubtle;
+
+  /// Soft dark shadow under the HUD texts (keeps 4.5:1 contrast on bright backgrounds).
+  final List<Shadow> hudShadows;
+
+  /// 2 px blur, 40 % black.
+  static const List<Shadow> softHudShadow = [
+    Shadow(color: Color(0x66000000), blurRadius: 2, offset: Offset(0, 1)),
+  ];
 
   /// Paints the whole-screen background.
   final void Function(Canvas canvas, Size size) paintBackground;
@@ -89,6 +98,7 @@ class BlockTheme {
     gridLine: const Color(0x332EC4B6),
     boardBackdrop: const Color(0xFF0A1A22),
     backgroundTop: const Color(0xFF35C2D8),
+    hudShadows: softHudShadow,
     paintBackground: (c, s) => _radial(c, s, const [
       Color(0xFF35C2D8),
       Color(0xFF2C73E0),
@@ -183,6 +193,7 @@ class BlockTheme {
     gridLine: const Color(0x4400E5FF),
     boardBackdrop: const Color(0xFF082545),
     backgroundTop: const Color(0xFF1B6FB5),
+    hudShadows: softHudShadow,
     paintBackground: _oceanBackground,
     paintSkin: _shellSkin,
   );

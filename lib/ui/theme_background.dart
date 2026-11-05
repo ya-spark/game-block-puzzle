@@ -50,6 +50,7 @@ class _ThemeBackgroundState extends State<ThemeBackground>
           widget.theme.hudSubtle,
           _fade.value,
         )!,
+        shadows: widget.theme.hudShadows,
         child: CustomPaint(
           painter: _BackgroundPainter(_from, widget.theme, _fade.value),
           child: child,
@@ -65,18 +66,22 @@ class HudColors extends InheritedWidget {
     super.key,
     required this.text,
     required this.subtle,
+    this.shadows = const [],
     required super.child,
   });
 
   final Color text;
   final Color subtle;
 
+  /// Text shadow for the HUD texts of the current theme (empty on most themes).
+  final List<Shadow> shadows;
+
   static HudColors of(BuildContext context) =>
       context.dependOnInheritedWidgetOfExactType<HudColors>()!;
 
   @override
   bool updateShouldNotify(HudColors old) =>
-      old.text != text || old.subtle != subtle;
+      old.text != text || old.subtle != subtle || old.shadows != shadows;
 }
 
 class _BackgroundPainter extends CustomPainter {

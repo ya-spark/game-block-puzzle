@@ -29,7 +29,7 @@ Future<void> pumpApp(WidgetTester tester, Services s) async {
 }
 
 Future<void> settle(WidgetTester tester) async {
-  for (var i = 0; i < 10; i++) {
+  for (var i = 0; i < 15; i++) {
     await tester.pump(const Duration(milliseconds: 100));
   }
 }
@@ -205,6 +205,75 @@ void main() {
       1,
     );
   });
+
+  Future<void> endRun(WidgetTester tester) async {
+    final s = await buildFakeServices();
+    await s.profile.setSound(false);
+    await pumpGame(tester, s, deadEndState());
+    expect(await PuzzleBot(tester).drag(0, 0, 0), isTrue);
+  }
+
+  bool retryTappable(WidgetTester tester) =>
+      find.byKey(TestIds.gameOverRetry).hitTestable().evaluate().isNotEmpty;
+
+  testWidgets('game over eases in: buttons tappable only after 1 s', (
+    tester,
+  ) async {
+    await endRun(tester);
+    await tester.pump(); // first frame of the overlay
+    expect(find.byKey(TestIds.gameOverPanel), findsOneWidget);
+    final score = find.textContaining('Score ');
+    final shown = tester.widget<Text>(score).data;
+    expect(retryTappable(tester), isFalse);
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(retryTappable(tester), isFalse);
+    await tester.pump(const Duration(milliseconds: 350));
+    expect(retryTappable(tester), isFalse);
+    expect(tester.widget<Text>(score).data, shown);
+    await tester.pump(const Duration(milliseconds: 360));
+    expect(retryTappable(tester), isTrue);
+    expect(tester.widget<Text>(score).data, shown);
+  });
+
+  testWidgets('game over with reduce motion is a single 0.2 s fade', (
+    tester,
+  ) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        const FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
+    await endRun(tester);
+    await tester.pump();
+    expect(retryTappable(tester), isFalse);
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(retryTappable(tester), isTrue);
+  });
+
+  for (final id in ['gems', 'ocean']) {
+    testWidgets('HUD text carries a soft shadow on $id', (tester) async {
+      final s = await buildFakeServices();
+      await s.profile.setSound(false);
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final game = BlockPuzzleGame(
+        initialState: deadEndState(),
+        themeStart: BlockTheme.all.indexWhere((t) => t.id == id),
+      );
+      await tester.pumpWidget(
+        ServicesScope(
+          services: s,
+          child: MaterialApp(home: GameScreen(game: game)),
+        ),
+      );
+      await PuzzleBot(tester).waitForGame();
+      expect(game.theme.id, id);
+      for (final key in [TestIds.gameScore, TestIds.gameBest]) {
+        final shadows = tester.widget<Text>(find.byKey(key)).style!.shadows!;
+        expect(shadows.single.blurRadius, 2);
+        expect(shadows.single.color, const Color(0x66000000));
+      }
+    });
+  }
 
   testWidgets('home tip dialog shows once per day', (tester) async {
     var now = DateTime.utc(2026, 11, 5, 10);

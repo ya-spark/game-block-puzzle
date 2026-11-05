@@ -140,7 +140,10 @@ Code: `lib/game/layout.dart` and `lib/game/flame/block_puzzle_game.dart`. `cell`
 
 **Game over**
 - Overlay pinned to the top of the screen, no dimming of the board. All content sits in a panel (`game.over.panel`): rounded card (radius 24), solid dark surface `#1E1535` at about 90 % opacity (`0xE6`), thin light border (white at 33 %), soft shadow. Text and buttons keep at least 4.5:1 contrast against the panel (white on the dark surface; secondary buttons use `#7B3FD6` to `#B02F78` with white text; gold buttons use dark brown text).
+- **Eases in, never abrupt (about 1 s):** (a) the moment the run ends, input is locked, the board freezes and the game over voice line starts; (b) 0.3 s hold while the scene dims to about 40 % black; (c) the panel fades 0 to 100 % and slides up 24 px over 0.7 s (ease-out cubic); (d) the buttons (and the eye button) are tappable only once the panel has settled, at 1 s. `game.over.panel` exists from the first frame of (c). With reduce motion (system animations off) there is a single 0.2 s fade, no hold, no slide. The score shown never changes during the transition.
 - **View board:** a small eye button (`game.over.view`) at the top right of the panel. Tapping it fades the panel out in 0.2 s so the whole final board is visible; a tap anywhere, or the eye button (which stays visible), brings the panel back. The board stays visible and still, and nothing else changes while the panel is hidden (scores and rewards are already final).
+
+**HUD text legibility:** on the Gems and Ocean themes the HUD texts (score, SCORE label, streak, combo, gold rush, best) carry a soft dark text shadow (2 px blur, 40 % black, 1 px down) so contrast stays at least 4.5:1 without changing the layout. Other themes have no shadow.
 
 **Piece dealing feel**
 - See section 4 (steady 4-cell preference, kindness falls with lines cleared, no tiny pieces on a roomy board).

@@ -45,8 +45,51 @@ class GameOverPanel extends StatefulWidget {
   State<GameOverPanel> createState() => _GameOverPanelState();
 }
 
-class _GameOverPanelState extends State<GameOverPanel> {
+class _GameOverPanelState extends State<GameOverPanel>
+    with SingleTickerProviderStateMixin {
   bool _hidden = false;
+  late final AnimationController _intro = AnimationController(vsync: this);
+  bool _started = false;
+
+  /// Hold before the panel appears, and the panel's own fade/slide (total 1 s).
+  static const _holdMs = 300;
+  static const _panelMs = 700;
+  static const _reducedMs = 200;
+  static const _slide = 24.0;
+  static const _dim = 0.4;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    // Reduce motion: a single 0.2 s fade, no hold and no slide.
+    final reduce = MediaQuery.disableAnimationsOf(context);
+    _intro.duration = Duration(
+      milliseconds: reduce ? _reducedMs : _holdMs + _panelMs,
+    );
+    _intro.forward();
+  }
+
+  @override
+  void dispose() {
+    _intro.dispose();
+    super.dispose();
+  }
+
+  bool get _reduce => _intro.duration!.inMilliseconds == _reducedMs;
+
+  /// 0..1 progress of the panel fade (after the hold).
+  double get _panelT {
+    if (_reduce) return _intro.value;
+    final t = (_intro.value * (_holdMs + _panelMs) - _holdMs) / _panelMs;
+    return t.clamp(0.0, 1.0);
+  }
+
+  /// 0..1 progress of the scene dimming (during the hold).
+  double get _dimT => _reduce
+      ? _intro.value
+      : (_intro.value * (_holdMs + _panelMs) / _holdMs).clamp(0.0, 1.0);
 
   void _toggle() => setState(() => _hidden = !_hidden);
 
@@ -58,6 +101,17 @@ class _GameOverPanelState extends State<GameOverPanel> {
       child: Stack(
         fit: StackFit.expand,
         children: [
+          // Scene dims to about 40 % while the end of the run sinks in.
+          IgnorePointer(
+            child: AnimatedBuilder(
+              animation: _intro,
+              builder: (context, _) => AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: _hidden ? 0 : 1,
+                child: ColoredBox(color: Color.fromRGBO(0, 0, 0, _dim * _dimT)),
+              ),
+            ),
+          ),
           // While the panel is hidden, a tap anywhere brings it back.
           if (_hidden)
             GestureDetector(
@@ -74,12 +128,32 @@ class _GameOverPanelState extends State<GameOverPanel> {
                   constraints: const BoxConstraints(maxWidth: 380),
                   child: Stack(
                     children: [
-                      IgnorePointer(
-                        ignoring: _hidden,
+                      AnimatedBuilder(
+                        animation: _intro,
                         child: AnimatedOpacity(
                           duration: const Duration(milliseconds: 200),
                           opacity: _hidden ? 0 : 1,
                           child: _card(w),
+                        ),
+                        // Buttons are tappable only once the panel has settled.
+                        builder: (context, child) => IgnorePointer(
+                          ignoring: _hidden || !_intro.isCompleted,
+                          child: Opacity(
+                            opacity: _panelT,
+                            child: Transform.translate(
+                              offset: Offset(
+                                0,
+                                _reduce
+                                    ? 0
+                                    : _slide *
+                                          (1 -
+                                              Curves.easeOutCubic.transform(
+                                                _panelT,
+                                              )),
+                              ),
+                              child: child,
+                            ),
+                          ),
                         ),
                       ),
                       Positioned(
@@ -95,7 +169,9 @@ class _GameOverPanelState extends State<GameOverPanel> {
                             _hidden ? Icons.visibility_off : Icons.visibility,
                             color: Colors.white,
                           ),
-                          onPressed: _toggle,
+                          onPressed: () {
+                            if (_intro.isCompleted) _toggle();
+                          },
                         ),
                       ),
                     ],

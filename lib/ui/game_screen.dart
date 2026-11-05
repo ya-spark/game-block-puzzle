@@ -340,6 +340,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                                       style: TextStyle(
                                         color: HudColors.of(context).text,
                                         fontWeight: FontWeight.bold,
+                                        shadows: HudColors.of(context).shadows,
                                       ),
                                     ),
                                   ),
@@ -410,6 +411,7 @@ class _ScorePill extends StatelessWidget {
               height: 1.15,
               fontWeight: FontWeight.w800,
               letterSpacing: 1,
+              shadows: HudColors.of(context).shadows,
             ),
           ),
           Text(
@@ -420,6 +422,7 @@ class _ScorePill extends StatelessWidget {
               height: 1,
               letterSpacing: 3,
               color: HudColors.of(context).subtle,
+              shadows: HudColors.of(context).shadows,
             ),
           ),
         ],
@@ -478,6 +481,7 @@ class _StreakBar extends StatelessWidget {
                   style: TextStyle(
                     color: HudColors.of(context).text,
                     fontWeight: FontWeight.w700,
+                    shadows: HudColors.of(context).shadows,
                   ),
                 ),
               ),
@@ -486,7 +490,11 @@ class _StreakBar extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: DefaultTextStyle(
-        style: TextStyle(color: HudColors.of(context).text, fontSize: 13),
+        style: TextStyle(
+          color: HudColors.of(context).text,
+          fontSize: 13,
+          shadows: HudColors.of(context).shadows,
+        ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           spacing: 14,
