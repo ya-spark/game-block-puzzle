@@ -12,6 +12,7 @@ abstract final class TestIds {
   static const homeCoins = Key('home.coins');
   static const homeBestScore = Key('home.bestScore');
   static const homeStreak = Key('home.streak');
+  static const homeHero = Key('home.hero');
 
   // Game
   static const gameWidget = Key('game.widget');

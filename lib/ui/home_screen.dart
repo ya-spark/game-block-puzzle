@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../core/services.dart';
+import '../game/themes/block_theme.dart';
+import 'home_hero.dart';
 import 'routes.dart';
 import 'test_ids.dart';
+import 'theme_background.dart';
 import 'widgets.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -39,8 +42,12 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
     final s = ServicesScope.of(context);
     final profile = s.profile;
     return Scaffold(
-      body: Container(
-        decoration: KidColors.background,
+      body: ListenableBuilder(
+        listenable: profile,
+        builder: (context, child) => ThemeBackground(
+          theme: BlockTheme.byIndex(profile.data.themeIndex),
+          child: child!,
+        ),
         child: SafeArea(
           child: ListenableBuilder(
             listenable: profile,
@@ -52,19 +59,18 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                     mainAxisSize: MainAxisSize.min,
                     spacing: 14,
                     children: [
-                      const PopIn(
-                        child: Text('🧩 ⭐ 🎈', style: TextStyle(fontSize: 44)),
-                      ),
+                      const HomeHero(),
                       Text(
                         s.config.displayName,
                         style: Theme.of(context).textTheme.displayMedium
                             ?.copyWith(
-                              color: KidColors.ink,
+                              color: Colors.white,
                               fontWeight: FontWeight.w900,
                               shadows: const [
                                 Shadow(
-                                  color: Colors.white,
+                                  color: Color(0xAA000000),
                                   offset: Offset(0, 3),
+                                  blurRadius: 4,
                                 ),
                               ],
                             ),

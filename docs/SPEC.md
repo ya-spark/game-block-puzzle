@@ -49,6 +49,11 @@ Banner on the game screen; interstitials paced by `ads` in `app.config.yaml` (mi
 ## 7. Screens
 Home, game, game over (overlay), daily reward, challenges and achievements, shop, settings. Every interactive widget has a key in `lib/ui/test_ids.dart`. Screens use named routes so each is deep-linkable.
 
+**Home scene and background** (`lib/ui/home_hero.dart`, `lib/ui/theme_background.dart`)
+- Above the title, a code-drawn band 160 dp tall (no assets, no gestures, test ID `home.hero`) replaces the emoji row: two lanes of 4-cell catalogue pieces (5 per lane, 10 objects) drift, one right to left (22 u/s) and one left to right (15 u/s), with a gentle bob. Pieces use the current theme's block skin (theme at the saved `themeIndex`) and restyle when it changes. About every 6 s a lane completes with a 1 s sparkle (alternating lanes).
+- One `CustomPainter`, one ticker; it stops while the home route is covered and while the app is in the background.
+- The home background is the current theme's background at the saved `themeIndex`, with the same 1.5 s cross-fade when it changes. The title is white with a dark shadow. Other menu screens keep the plain gradient.
+
 ## 8. Art and audio
 Dark teal theme (seed `#2EC4B6`), rounded glossy blocks, kid-friendly colourful menu pages. Narrator voice clips (`assets/voice/`) on clears, combos, new best and game over. Every asset is listed in `assets/LICENSES.md`.
 

@@ -11,7 +11,9 @@ import 'package:block_puzzle/game/rules/game_state.dart';
 import 'package:block_puzzle/game/rules/piece.dart';
 import 'package:block_puzzle/game/rules/piece_generator.dart';
 import 'package:block_puzzle/ui/game_screen.dart';
+import 'package:block_puzzle/ui/home_hero.dart';
 import 'package:block_puzzle/ui/test_ids.dart';
+import 'package:block_puzzle/ui/theme_background.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/fake_services.dart';
@@ -33,6 +35,32 @@ Future<void> settle(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('home hero uses the saved theme skin and pauses when covered', (
+    tester,
+  ) async {
+    final s = await buildFakeServices();
+    await s.profile.setThemeIndex(3);
+    await pumpApp(tester, s);
+    expect(find.byKey(TestIds.homeHero), findsOneWidget);
+    final hero = tester.state<HomeHeroState>(find.byType(HomeHero));
+    expect(hero.theme.id, 'candy');
+    expect(hero.running, isTrue);
+    await s.profile.setThemeIndex(4);
+    await tester.pump();
+    expect(hero.theme.id, 'ocean');
+    await tester.tap(find.byKey(TestIds.homeSettings));
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(hero.running, isFalse);
+  });
+
+  testWidgets('home background follows the saved theme index', (tester) async {
+    final s = await buildFakeServices();
+    await s.profile.setThemeIndex(2);
+    await pumpApp(tester, s);
+    final bg = tester.widget<ThemeBackground>(find.byType(ThemeBackground));
+    expect(bg.theme.id, 'wood');
+  });
+
   testWidgets('home shows the main menu', (tester) async {
     final s = await buildFakeServices();
     await pumpApp(tester, s);
@@ -55,7 +83,8 @@ void main() {
     final s = await buildFakeServices();
     await pumpApp(tester, s);
     await tester.ensureVisible(find.byKey(TestIds.homeDailyReward));
-    await tester.pumpAndSettle();
+    // The home hero ticker never settles, so pump a fixed time.
+    await tester.pump(const Duration(milliseconds: 500));
     await tester.tap(find.byKey(TestIds.homeDailyReward));
     await tester.pumpAndSettle();
     expect(find.byKey(TestIds.dailyDay(6)), findsOneWidget);
