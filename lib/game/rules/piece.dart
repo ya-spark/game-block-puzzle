@@ -5,14 +5,17 @@ class Piece {
   final String id;
   final List<(int, int)> cells;
 
-  /// Index into the UI palette (0..colorCount-1).
+  /// Index into the current theme's palette (0..colorCount-1). Dealt pieces get a random one.
   final int colorIndex;
+
+  /// The same shape with another colour.
+  Piece withColor(int index) => Piece(id, cells, index % colorCount);
 
   int get height => cells.map((c) => c.$1).reduce((a, b) => a > b ? a : b) + 1;
   int get width => cells.map((c) => c.$2).reduce((a, b) => a > b ? a : b) + 1;
   int get size => cells.length;
 
-  static const int colorCount = 6;
+  static const int colorCount = 8;
 }
 
 /// All shapes (with rotations) the generator can offer.

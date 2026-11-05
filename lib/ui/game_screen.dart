@@ -10,6 +10,7 @@ import '../game/flame/block_puzzle_game.dart';
 import '../game/rules/game_state.dart';
 import 'game_over_panel.dart';
 import 'test_ids.dart';
+import 'theme_background.dart';
 
 /// Player-facing name of the rewarded-ad second chance on the game over screen (rename it here only).
 const String continueLabel = 'Continue';
@@ -70,9 +71,15 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     final existing = _game;
     if (existing != null) return existing;
     final game =
-        widget.game ?? BlockPuzzleGame(bestScore: s.profile.data.bestScore);
+        widget.game ??
+        BlockPuzzleGame(
+          bestScore: s.profile.data.bestScore,
+          themeStart: s.profile.data.themeIndex,
+        );
     _profile = s.profile..addListener(_applyAudio);
     game.onPlaced = (o) {
+      // Remember the rotation so a new game (or a new launch) continues it.
+      s.profile.setThemeIndex(game.themeIndex);
       if (!o.gameOver) {
         _praise(o);
         _warnIfCrowded(game);
@@ -244,18 +251,18 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     final s = ServicesScope.of(context);
     final game = _ensureGame(s);
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment(0, -1),
-            radius: 1.4,
-            colors: [Color(0xFF35C2D8), Color(0xFF2C73E0), Color(0xFF4A3FB5)],
-            stops: [0, 0.55, 1],
-          ),
-        ),
+      body: ThemeBackground(
+        theme: game.theme,
         child: SafeArea(
           child: Column(
             children: [
+              // Invisible; the current theme id is its Semantics value (tests, bot).
+              Semantics(
+                key: TestIds.gameTheme,
+                identifier: 'game.theme',
+                value: game.theme.id,
+                child: const SizedBox.shrink(),
+              ),
               // One compact header row (back, score, best) plus a one-line streak
               // strip, so the play area below keeps room for the piece tray.
               Padding(

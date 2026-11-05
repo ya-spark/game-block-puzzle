@@ -27,6 +27,9 @@ abstract final class TestIds {
   static const gameStreak = Key('game.streak');
   static const gameCombo = Key('game.combo');
 
+  /// Invisible; its Semantics value is the id of the current theme.
+  static const gameTheme = Key('game.theme');
+
   // Daily reward
   static const dailyClaim = Key('daily.claim');
   static const dailyStreak = Key('daily.streak');

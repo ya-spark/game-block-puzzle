@@ -47,6 +47,24 @@ Dark teal theme (seed `#2EC4B6`), rounded glossy blocks, kid-friendly colourful 
 - Settings: **Sound** switch (master mute, on top), **Master volume** slider 0-100 % (default 100 %, test ID `settings.volume`), **Background sound** picker Off / Morning birds (default) / Before sunrise / Heartbeat (`settings.ambience`), **Voice** switch, default on (`settings.voice`). No Effects switch (no effect sounds). All saved in the profile and applied immediately.
 - **Hand** choice Right (default) / Left (`settings.hand`), saved in the profile. There is no pause button or side buttons during play; Left only mirrors the back button to the right side (header row reversed). Board, tray, score and game over screen are unchanged.
 
+**Themes** (code: `lib/game/themes/block_theme.dart`, `lib/game/rules/theme_rotation.dart`)
+- One theme = background + block skin + 8 colours + empty-cell and grid-line colours, all drawn in code (no assets). The board stores only a colour index per cell; the pure-Dart rules do not know themes. Cell pictures are cached per (theme, colour).
+
+| id | Skin | Background |
+|----|------|------------|
+| `gems` | glossy gems (the original look) | midnight-teal gradient (the original) |
+| `cakes` | cream-iced biscuit cells with sprinkles | chocolate-brown with a soft wafer pattern |
+| `wood` | warm wooden tiles with grain lines | forest-green gradient |
+| `candy` | glossy gumdrop sweets | pastel pink-sky gradient |
+| `ocean` | pearly shell tiles | deep-blue gradient with soft bubbles |
+| `space` | round planet tiles with rings and craters | dark purple starfield |
+
+- Colours: 8 per theme (`Piece.colorCount = 8`). Each dealt piece gets a random colour index from the game's seeded generator (not a fixed colour per shape). Every colour index also has its own small mark (dot, ring, bars, diamond, triangle, cross, two dots), so colours stay distinct for colour-blind players.
+- Change rule: no picker, no setting. The theme changes every time 10 more lines are cleared: `ThemeRotation.themeEveryLines = 10`, index `(start + linesClearedTotal ~/ 10) % 6`, in table order, wrapping. This is independent of the scoring stage (every 5 lines).
+- The rotation index is saved in the profile (`themeIndex`); a new game starts from the index the last game reached. A new install starts at `gems`.
+- Transition: a 1.5 s cross-fade (`PuzzleView.fadeSeconds`) of the background and all cells; no flashing, input is never blocked. Cells on the board, the tray and the ghost preview are redrawn in the new theme at once (they keep their colour index).
+- Test hook: the invisible `game.theme` test ID carries the current theme id as its Semantics value.
+
 ## 9. Play Games
 Sign-in, high-score leaderboard and cloud save, off until `play_games.enabled` in `app.config.yaml`.
 

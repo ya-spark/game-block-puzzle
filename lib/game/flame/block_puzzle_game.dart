@@ -4,13 +4,14 @@ import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/painting.dart' show HSLColor;
 
 import '../layout.dart';
 import '../rules/game_state.dart';
 import '../rules/piece.dart';
 import '../rules/piece_generator.dart';
 import '../rules/snap.dart';
+import '../rules/theme_rotation.dart';
+import '../themes/block_theme.dart';
 
 /// Flame renderer for the block puzzle. All rules live in [GameState] (pure Dart);
 /// this class only draws and translates drags into `state.place(...)`.
@@ -19,6 +20,7 @@ class BlockPuzzleGame extends FlameGame {
     this.bestScore = 0,
     PieceGenerator? generator,
     Color? background,
+    this.themeStart = 0,
 
     /// Test hook: start from a prepared state instead of a fresh game.
     GameState? initialState,
@@ -33,8 +35,14 @@ class BlockPuzzleGame extends FlameGame {
   final PieceGenerator? _generator;
   final Color _background;
 
+  /// Rotation index (see [ThemeRotation]) at which this game started.
+  int themeStart;
+
   late GameState state;
   late PuzzleView view;
+
+  /// Cached cell pictures per (theme, colour).
+  final ThemeTileCache tiles = ThemeTileCache();
 
   /// Called after every legal placement.
   void Function(PlaceOutcome outcome)? onPlaced;
@@ -47,6 +55,13 @@ class BlockPuzzleGame extends FlameGame {
 
   PuzzleLayout get layout => view.layout;
 
+  /// Current position in the theme rotation: changes every
+  /// [ThemeRotation.themeEveryLines] cleared lines.
+  int get themeIndex =>
+      ThemeRotation.indexFor(themeStart, state.linesClearedTotal);
+
+  BlockTheme get theme => BlockTheme.byIndex(themeIndex);
+
   @override
   Color backgroundColor() => _background;
 
@@ -56,7 +71,15 @@ class BlockPuzzleGame extends FlameGame {
     await add(view);
   }
 
+  @override
+  void onRemove() {
+    tiles.dispose();
+    super.onRemove();
+  }
+
   void restart() {
+    // A new game continues the rotation where this one stopped.
+    themeStart = themeIndex;
     state = GameState.newGame(
       bestScore: state.bestScore,
       generator: _generator,
@@ -87,15 +110,8 @@ class PuzzleView extends PositionComponent
     with DragCallbacks, HasGameReference<BlockPuzzleGame> {
   late PuzzleLayout layout = PuzzleLayout(1, 1);
 
-  /// Gem colors, one per piece color index.
-  static const List<Color> palette = [
-    Color(0xFF2EC4B6), // teal
-    Color(0xFFFF6B5E), // coral
-    Color(0xFFFFC145), // amber
-    Color(0xFF8E7DFF), // violet
-    Color(0xFF4CC9F0), // sky
-    Color(0xFF9BDE5B), // lime
-  ];
+  /// Seconds the cross-fade between two themes takes.
+  static const double fadeSeconds = 1.5;
 
   int? _dragSlot;
   Vector2 _finger = Vector2.zero();
@@ -106,6 +122,14 @@ class PuzzleView extends PositionComponent
   List<int> _flashRows = const [];
   List<int> _flashCols = const [];
   double _flashT = 0;
+
+  /// Theme cross-fade: [_from] fades into [_to]; [_fade] runs 0..1 (1 = settled).
+  BlockTheme? _fromTheme;
+  BlockTheme? _toTheme;
+  double _fade = 1;
+
+  BlockTheme get _from => _fromTheme ?? game.theme;
+  BlockTheme get _to => _toTheme ?? game.theme;
 
   @override
   void onGameResize(Vector2 size) {
@@ -125,6 +149,16 @@ class PuzzleView extends PositionComponent
   @override
   void update(double dt) {
     if (_flashT > 0) _flashT = max(0, _flashT - dt);
+    final now = game.theme;
+    if (_toTheme == null) {
+      _toTheme = now;
+    } else if (now.id != _toTheme!.id) {
+      // The theme changed: cells already on the board fade into it, input is never blocked.
+      _fromTheme = _toTheme;
+      _toTheme = now;
+      _fade = 0;
+    }
+    if (_fade < 1) _fade = min(1, _fade + dt / fadeSeconds);
   }
 
   // ---- input --------------------------------------------------------------
@@ -194,62 +228,23 @@ class PuzzleView extends PositionComponent
   @override
   void render(Canvas canvas) {
     final cs = layout.cellSize;
-    final board = game.state.board;
-    final gridPaint = Paint()..color = const Color(0xFF0A1A22);
-    final emptyPaint = Paint()..color = const Color(0xFF132A34);
-    final outline = Paint()
-      ..color = const Color(0x332EC4B6)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+    final theme = _to;
+    final slot = _dragSlot;
 
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          layout.boardLeft - 4,
-          layout.boardTop - 4,
-          layout.boardSizePx + 8,
-          layout.boardSizePx + 8,
-        ),
-        const Radius.circular(16),
-      ),
-      gridPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          layout.boardLeft - 4,
-          layout.boardTop - 4,
-          layout.boardSizePx + 8,
-          layout.boardSizePx + 8,
-        ),
-        const Radius.circular(16),
-      ),
-      outline,
-    );
-    for (var r = 0; r < board.size; r++) {
-      for (var c = 0; c < board.size; c++) {
-        final rect = Rect.fromLTWH(
-          layout.boardLeft + c * cs,
-          layout.boardTop + r * cs,
-          cs,
-          cs,
-        );
-        canvas.drawRRect(
-          RRect.fromRectAndRadius(rect.deflate(1), const Radius.circular(7)),
-          emptyPaint,
-        );
-        if (board.isFilled(r, c)) {
-          _drawBlock(
-            canvas,
-            rect,
-            palette[(board.at(r, c) - 1) % palette.length],
-          );
-        }
-      }
+    // Board, cells and tray in the theme; during a change the new theme fades in over the old.
+    if (_fade < 1) {
+      _drawScene(canvas, _from);
+      canvas.saveLayer(
+        null,
+        Paint()..color = Color.fromRGBO(255, 255, 255, _fade),
+      );
+      _drawScene(canvas, theme);
+      canvas.restore();
+    } else {
+      _drawScene(canvas, theme);
     }
 
     // Placement preview while dragging.
-    final slot = _dragSlot;
     if (slot != null) {
       final piece = game.state.tray[slot];
       if (piece != null) {
@@ -257,7 +252,7 @@ class PuzzleView extends PositionComponent
         if (cell != null) {
           final (r, c) = cell;
           final ghost = Paint()
-            ..color = palette[piece.colorIndex].withAlpha(90);
+            ..color = theme.colorAt(piece.colorIndex).withAlpha(90);
           for (final (dr, dc) in piece.cells) {
             canvas.drawRect(
               Rect.fromLTWH(
@@ -301,7 +296,54 @@ class PuzzleView extends PositionComponent
       }
     }
 
-    // Tray.
+    // Dragged piece.
+    if (slot != null) {
+      final piece = game.state.tray[slot];
+      if (piece != null) {
+        final (x, y) = _draggedTopLeft(piece);
+        _drawPiece(canvas, theme, piece, x, y, cs);
+      }
+    }
+  }
+
+  /// Board backdrop, empty cells, filled cells and the resting tray pieces in [theme].
+  void _drawScene(Canvas canvas, BlockTheme theme) {
+    final cs = layout.cellSize;
+    final board = game.state.board;
+    final backdrop = Paint()..color = theme.boardBackdrop;
+    final emptyPaint = Paint()..color = theme.emptyCell;
+    final outline = Paint()
+      ..color = theme.gridLine
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    final frame = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        layout.boardLeft - 4,
+        layout.boardTop - 4,
+        layout.boardSizePx + 8,
+        layout.boardSizePx + 8,
+      ),
+      const Radius.circular(16),
+    );
+    canvas.drawRRect(frame, backdrop);
+    canvas.drawRRect(frame, outline);
+    for (var r = 0; r < board.size; r++) {
+      for (var c = 0; c < board.size; c++) {
+        final rect = Rect.fromLTWH(
+          layout.boardLeft + c * cs,
+          layout.boardTop + r * cs,
+          cs,
+          cs,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect.deflate(1), const Radius.circular(7)),
+          emptyPaint,
+        );
+        if (board.isFilled(r, c)) {
+          game.tiles.draw(canvas, theme, board.at(r, c) - 1, rect);
+        }
+      }
+    }
     for (var i = 0; i < GameState.traySlots; i++) {
       final piece = game.state.tray[i];
       if (piece == null || i == _dragSlot) continue;
@@ -309,80 +351,30 @@ class PuzzleView extends PositionComponent
       final tcs = layout.trayCellSize;
       _drawPiece(
         canvas,
+        theme,
         piece,
         cx - piece.width * tcs / 2,
         cy - piece.height * tcs / 2,
         tcs,
       );
     }
-
-    // Dragged piece.
-    if (slot != null) {
-      final piece = game.state.tray[slot];
-      if (piece != null) {
-        _drawPiece(
-          canvas,
-          piece,
-          _draggedTopLeft(piece).$1,
-          _draggedTopLeft(piece).$2,
-          cs,
-        );
-      }
-    }
   }
 
   void _drawPiece(
     Canvas canvas,
+    BlockTheme theme,
     Piece piece,
     double left,
     double top,
     double cs,
   ) {
-    final color = palette[piece.colorIndex];
     for (final (dr, dc) in piece.cells) {
-      _drawBlock(
+      game.tiles.draw(
         canvas,
+        theme,
+        piece.colorIndex,
         Rect.fromLTWH(left + dc * cs, top + dr * cs, cs, cs),
-        color,
       );
     }
-  }
-
-  /// Glossy rounded "gem": diagonal gradient, soft bottom shade, small specular dot.
-  void _drawBlock(Canvas canvas, Rect rect, Color color) {
-    final r = rect.deflate(1.5);
-    final radius = Radius.circular(r.width * 0.26);
-    final rrect = RRect.fromRectAndRadius(r, radius);
-    final hsl = HSLColor.fromColor(color);
-    final light = hsl
-        .withLightness((hsl.lightness + 0.12).clamp(0.0, 1.0))
-        .toColor();
-    final dark = hsl
-        .withLightness((hsl.lightness - 0.12).clamp(0.0, 1.0))
-        .toColor();
-    canvas.drawRRect(
-      rrect,
-      Paint()
-        ..shader = Gradient.linear(
-          r.topLeft,
-          r.bottomRight,
-          [light, color, dark],
-          const [0.0, 0.55, 1.0],
-        ),
-    );
-    // Soft bottom edge.
-    canvas.drawRRect(
-      rrect.shift(Offset.zero),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = const Color(0x22000000),
-    );
-    // Specular dot.
-    canvas.drawCircle(
-      Offset(r.left + r.width * 0.3, r.top + r.height * 0.27),
-      r.width * 0.09,
-      Paint()..color = const Color(0xB3FFFFFF),
-    );
   }
 }

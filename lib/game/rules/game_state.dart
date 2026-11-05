@@ -50,7 +50,7 @@ class GameState {
       board: start.board,
       generator: gen,
       bestScore: bestScore,
-      tray: start.tray,
+      tray: gen.recolor(start.tray),
     );
   }
 

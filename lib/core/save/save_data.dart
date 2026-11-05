@@ -24,6 +24,7 @@ class SaveData {
     this.ambience = 'morning_birds',
     this.voiceOn = true,
     this.leftHanded = false,
+    this.themeIndex = 0,
   });
 
   /// Bump when the JSON shape changes and add a step to [SaveMigrator].
@@ -58,6 +59,9 @@ class SaveData {
   /// Left-handed layout: pause and back mirrored to the other side.
   final bool leftHanded;
 
+  /// Position in the theme rotation (`ThemeRotation`); a new game continues from it.
+  final int themeIndex;
+
   SaveData copyWith({
     int? coins,
     int? bestScore,
@@ -77,6 +81,7 @@ class SaveData {
     String? ambience,
     bool? voiceOn,
     bool? leftHanded,
+    int? themeIndex,
   }) => SaveData(
     coins: coins ?? this.coins,
     bestScore: bestScore ?? this.bestScore,
@@ -96,6 +101,7 @@ class SaveData {
     ambience: ambience ?? this.ambience,
     voiceOn: voiceOn ?? this.voiceOn,
     leftHanded: leftHanded ?? this.leftHanded,
+    themeIndex: themeIndex ?? this.themeIndex,
   );
 
   Map<String, Object?> toJson() => {
@@ -118,6 +124,7 @@ class SaveData {
     'ambience': ambience,
     'voiceOn': voiceOn,
     'leftHanded': leftHanded,
+    'themeIndex': themeIndex,
   };
 
   /// Expects JSON already migrated to [currentVersion].
@@ -147,6 +154,7 @@ class SaveData {
     ambience: j['ambience'] as String? ?? 'morning_birds',
     voiceOn: j['voiceOn'] as bool? ?? true,
     leftHanded: j['leftHanded'] as bool? ?? false,
+    themeIndex: ((j['themeIndex'] as num?)?.toInt() ?? 0).abs(),
   );
 
   static Map<String, Object?>? _map(Object? o) =>

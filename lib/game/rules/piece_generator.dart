@@ -50,7 +50,20 @@ class PieceGenerator {
   /// below [kindUntilLines] the three pieces can all be played one after another and at least
   /// one clears a line (tried [kindAttempts] times, then relaxed); up to [plainFromLines]
   /// half of the deals are kind; after that the deal is plain.
-  List<Piece> dealTray(Board board, {int count = 3, int linesCleared = 0}) {
+  List<Piece> dealTray(Board board, {int count = 3, int linesCleared = 0}) =>
+      recolor(_deal(board, count: count, linesCleared: linesCleared));
+
+  /// Gives each piece a random colour index (seeded with the generator, so tests are
+  /// deterministic). The index is the position in the current theme's palette.
+  List<Piece> recolor(List<Piece> pieces) => [
+    for (final p in pieces) p.withColor(_rng.nextInt(Piece.colorCount)),
+  ];
+
+  List<Piece> _deal(
+    Board board, {
+    required int count,
+    required int linesCleared,
+  }) {
     final roomy =
         board.filledCount <= board.size * board.size * roomyFilledShare;
     final fitting = [
