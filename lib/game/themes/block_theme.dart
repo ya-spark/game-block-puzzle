@@ -18,6 +18,9 @@ class BlockTheme {
     required this.emptyCell,
     required this.gridLine,
     required this.boardBackdrop,
+    required this.backgroundTop,
+    this.hudText = const Color(0xFFFFFFFF),
+    this.hudSubtle = const Color(0xFF7FB7BD),
     required this.paintBackground,
     required this.paintSkin,
   }) : assert(palette.length == Piece.colorCount);
@@ -29,6 +32,15 @@ class BlockTheme {
   final Color emptyCell;
   final Color gridLine;
   final Color boardBackdrop;
+
+  /// Top colour of the background gradient (what the HUD text must contrast with).
+  final Color backgroundTop;
+
+  /// HUD text drawn straight on the background (score, streak, combo, rush chip, best).
+  final Color hudText;
+
+  /// Secondary HUD text (the "SCORE" label).
+  final Color hudSubtle;
 
   /// Paints the whole-screen background.
   final void Function(Canvas canvas, Size size) paintBackground;
@@ -76,6 +88,7 @@ class BlockTheme {
     emptyCell: const Color(0xFF132A34),
     gridLine: const Color(0x332EC4B6),
     boardBackdrop: const Color(0xFF0A1A22),
+    backgroundTop: const Color(0xFF35C2D8),
     paintBackground: (c, s) => _radial(c, s, const [
       Color(0xFF35C2D8),
       Color(0xFF2C73E0),
@@ -99,6 +112,7 @@ class BlockTheme {
     emptyCell: const Color(0xFF4A2D1F),
     gridLine: const Color(0x44FFD9A8),
     boardBackdrop: const Color(0xFF2E1A10),
+    backgroundTop: const Color(0xFF6B4332),
     paintBackground: _cakesBackground,
     paintSkin: _cakeSkin,
   );
@@ -118,6 +132,7 @@ class BlockTheme {
     emptyCell: const Color(0xFF16402C),
     gridLine: const Color(0x44A8E6B8),
     boardBackdrop: const Color(0xFF0C2A1B),
+    backgroundTop: const Color(0xFF3E9A5A),
     paintBackground: (c, s) => _linear(c, s, const [
       Color(0xFF3E9A5A),
       Color(0xFF1F6B3F),
@@ -141,6 +156,9 @@ class BlockTheme {
     emptyCell: const Color(0xFFF7D6E6),
     gridLine: const Color(0x55FFFFFF),
     boardBackdrop: const Color(0xFFE9B8D0),
+    backgroundTop: const Color(0xFFFFB7D5),
+    hudText: const Color(0xFF5B2A55),
+    hudSubtle: const Color(0xFF6E3A68),
     paintBackground: (c, s) => _linear(c, s, const [
       Color(0xFFFFB7D5),
       Color(0xFFFFD9EC),
@@ -164,6 +182,7 @@ class BlockTheme {
     emptyCell: const Color(0xFF123A66),
     gridLine: const Color(0x4400E5FF),
     boardBackdrop: const Color(0xFF082545),
+    backgroundTop: const Color(0xFF1B6FB5),
     paintBackground: _oceanBackground,
     paintSkin: _shellSkin,
   );
@@ -183,6 +202,7 @@ class BlockTheme {
     emptyCell: const Color(0xFF241A4A),
     gridLine: const Color(0x44B9A7FF),
     boardBackdrop: const Color(0xFF130D2E),
+    backgroundTop: const Color(0xFF2A1659),
     paintBackground: _spaceBackground,
     paintSkin: _planetSkin,
   );

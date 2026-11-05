@@ -406,12 +406,14 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                                     size: 18,
                                   ),
                                   const SizedBox(width: 6),
-                                  Text(
-                                    '${game.state.bestScore}',
-                                    key: TestIds.gameBest,
-                                    style: const TextStyle(
-                                      color: Color(0xFFFFC145),
-                                      fontWeight: FontWeight.bold,
+                                  Builder(
+                                    builder: (context) => Text(
+                                      '${game.state.bestScore}',
+                                      key: TestIds.gameBest,
+                                      style: TextStyle(
+                                        color: HudColors.of(context).text,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -488,21 +490,22 @@ class _ScorePill extends StatelessWidget {
           Text(
             '$score',
             key: TestIds.gameScore,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: HudColors.of(context).text,
               fontSize: 30,
               height: 1.15,
               fontWeight: FontWeight.w800,
               letterSpacing: 1,
             ),
           ),
-          const Text(
+          Text(
             'SCORE',
+            key: TestIds.gameScoreLabel,
             style: TextStyle(
               fontSize: 9,
               height: 1,
               letterSpacing: 3,
-              color: Color(0xFF7FB7BD),
+              color: HudColors.of(context).subtle,
             ),
           ),
         ],
@@ -558,8 +561,8 @@ class _StreakBar extends StatelessWidget {
                 ),
                 child: Text(
                   'GOLD RUSH x2 · $rushLeft',
-                  style: const TextStyle(
-                    color: Color(0xFFFFE08A),
+                  style: TextStyle(
+                    color: HudColors.of(context).text,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -569,7 +572,7 @@ class _StreakBar extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: DefaultTextStyle(
-        style: const TextStyle(color: Color(0xFFCFE9EC), fontSize: 13),
+        style: TextStyle(color: HudColors.of(context).text, fontSize: 13),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           spacing: 14,

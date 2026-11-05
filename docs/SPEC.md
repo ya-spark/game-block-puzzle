@@ -96,6 +96,7 @@ Dark teal theme (seed `#2EC4B6`), rounded glossy blocks, kid-friendly colourful 
 - Change rule: no picker, no setting. The theme changes every time 10 more lines are cleared: `ThemeRotation.themeEveryLines = 10`, index `(start + linesClearedTotal ~/ 10) % 6`, in table order, wrapping. This is independent of the scoring stage (every 5 lines).
 - The rotation index is saved in the profile (`themeIndex`); a new game starts from the index the last game reached. A new install starts at `gems`.
 - Transition: a 1.5 s cross-fade (`PuzzleView.fadeSeconds`) of the background and all cells; no flashing, input is never blocked. Cells on the board, the tray and the ghost preview are redrawn in the new theme at once (they keep their colour index).
+- HUD text colour: each theme has `hudText` (and `hudSubtle` for the "SCORE" label) and `backgroundTop` (top colour of its background gradient). The game screen's HUD text drawn on the background (score digits, SCORE label, streak line, combo, GOLD RUSH chip text, best-score number) uses the current theme's colours; text inside dark pills/buttons is unchanged. Dark themes keep white (`hudSubtle` teal-grey `0xFF7FB7BD`); Candy uses dark plum `0xFF5B2A55` / `0xFF6E3A68`. The colours blend during the 1.5 s cross-fade. Rule: contrast of `hudText` and `hudSubtle` against `backgroundTop` is at least 4.5 (WCAG), checked by a test for every theme. Test ID `game.score_label` is the SCORE label.
 - Test hook: the invisible `game.theme` test ID carries the current theme id as its Semantics value.
 
 ## 9. Play Games

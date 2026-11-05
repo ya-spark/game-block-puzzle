@@ -90,6 +90,59 @@ void main() {
     });
   });
 
+  group('hud text', () {
+    double lum(Color c) {
+      double ch(double v) =>
+          v <= 0.03928 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4).toDouble();
+      return 0.2126 * ch(c.r) + 0.7152 * ch(c.g) + 0.0722 * ch(c.b);
+    }
+
+    double contrast(Color a, Color b) {
+      final la = lum(a), lb = lum(b);
+      return (max(la, lb) + 0.05) / (min(la, lb) + 0.05);
+    }
+
+    // Candy (pale background) must reach WCAG AA. The dark themes keep today's white
+    // (kept as-is by the owner's request) and only have a regression floor: white on
+    // their bright top colours is below 4.5 today (see the issue #68 comment).
+    test('candy hudText and hudSubtle reach 4.5 on the top colour', () {
+      final t = BlockTheme.candy;
+      expect(contrast(t.hudText, t.backgroundTop), greaterThanOrEqualTo(4.5));
+      expect(contrast(t.hudSubtle, t.backgroundTop), greaterThanOrEqualTo(4.5));
+    });
+
+    for (final t in BlockTheme.all) {
+      test('${t.id} hudText never gets harder to read than 2.0', () {
+        expect(contrast(t.hudText, t.backgroundTop), greaterThanOrEqualTo(2.0));
+      });
+    }
+  });
+
+  testWidgets('candy: the SCORE label and score use the Candy HUD colours', (
+    tester,
+  ) async {
+    final s = await buildFakeServices();
+    tester.view.physicalSize = const Size(400, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final game = BlockPuzzleGame(
+      themeStart: 3,
+      generator: PieceGenerator(Random(1)),
+    );
+    await tester.pumpWidget(
+      ServicesScope(
+        services: s,
+        child: MaterialApp(home: GameScreen(game: game)),
+      ),
+    );
+    await PuzzleBot(tester).waitForGame();
+    expect(game.theme.id, 'candy');
+    Color colorOf(Key k) => tester.widget<Text>(find.byKey(k)).style!.color!;
+    expect(colorOf(TestIds.gameScoreLabel), BlockTheme.candy.hudSubtle);
+    expect(colorOf(TestIds.gameScore), BlockTheme.candy.hudText);
+    expect(colorOf(TestIds.gameBest), BlockTheme.candy.hudText);
+  });
+
   group('skins', () {
     for (final t in BlockTheme.all) {
       test('${t.id} paints all 8 colour indexes and its background', () {

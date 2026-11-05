@@ -17,6 +17,7 @@ abstract final class TestIds {
   // Game
   static const gameWidget = Key('game.widget');
   static const gameScore = Key('game.score');
+  static const gameScoreLabel = Key('game.score_label');
   static const gameBest = Key('game.best');
   static const gameBack = Key('game.back');
   static const gameOverDialog = Key('game.over.dialog');

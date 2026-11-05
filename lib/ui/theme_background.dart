@@ -43,12 +43,40 @@ class _ThemeBackgroundState extends State<ThemeBackground>
     return AnimatedBuilder(
       animation: _fade,
       child: widget.child,
-      builder: (context, child) => CustomPaint(
-        painter: _BackgroundPainter(_from, widget.theme, _fade.value),
-        child: child,
+      builder: (context, child) => HudColors(
+        text: Color.lerp(_from.hudText, widget.theme.hudText, _fade.value)!,
+        subtle: Color.lerp(
+          _from.hudSubtle,
+          widget.theme.hudSubtle,
+          _fade.value,
+        )!,
+        child: CustomPaint(
+          painter: _BackgroundPainter(_from, widget.theme, _fade.value),
+          child: child,
+        ),
       ),
     );
   }
+}
+
+/// HUD text colours of the current theme, blended during the theme cross-fade.
+class HudColors extends InheritedWidget {
+  const HudColors({
+    super.key,
+    required this.text,
+    required this.subtle,
+    required super.child,
+  });
+
+  final Color text;
+  final Color subtle;
+
+  static HudColors of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<HudColors>()!;
+
+  @override
+  bool updateShouldNotify(HudColors old) =>
+      old.text != text || old.subtle != subtle;
 }
 
 class _BackgroundPainter extends CustomPainter {
