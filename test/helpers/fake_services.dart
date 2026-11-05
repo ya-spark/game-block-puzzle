@@ -8,6 +8,7 @@ import 'package:block_puzzle/core/identity/identity_service.dart';
 import 'package:block_puzzle/core/leaderboard/leaderboard_service.dart';
 import 'package:block_puzzle/core/notifications/notification_service.dart';
 import 'package:block_puzzle/core/profile/profile_store.dart';
+import 'package:block_puzzle/core/purchase/parent_gate_guard.dart';
 import 'package:block_puzzle/core/purchase/purchase_service.dart';
 import 'package:block_puzzle/core/remote_config/remote_config_service.dart';
 import 'package:block_puzzle/core/save/save_service.dart';
@@ -21,6 +22,7 @@ Future<Services> buildFakeServices({
   DateTime Function()? clock,
   FakeShareService? share,
   bool tips = false,
+  ParentGateGuard? parentGate,
 }) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
@@ -51,6 +53,7 @@ Future<Services> buildFakeServices({
     remoteConfig: const NoopRemoteConfigService(),
     profile: profile,
     share: share ?? FakeShareService(),
+    parentGate: parentGate,
   );
   services.wirePurchases();
   return services;

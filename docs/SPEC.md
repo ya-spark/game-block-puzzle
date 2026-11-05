@@ -18,7 +18,7 @@ Pure Dart in `lib/game/rules/`.
 - Measured (seeded greedy bot, `test/game/start_and_score_test.dart`, 20 seeds, games reaching 60 lines): a 60-line game scores about 11,068 on average with `maxCombo = 8`, `maxStage = 13`, `stageExponent = 1.25` (1.0 gave ~6,850, 1.2 gave ~10,029). The test asserts the 10,000-12,000 band.
 - Start of a game (not after Continue): a prepared board 70% full (45 of 64 cells, plus or minus 2) with no complete row or column (`lib/game/rules/start_board.dart`, from the game seed). The first tray is three 4-cell pieces, at least two of them Z or J (any rotation or mirror the catalogue defines), the third any 4-cell piece, and no piece (same shape and rotation) more than twice; only the first tray is drawn this way, later trays are unchanged. Each of the three is placeable on the start board and each clears 2 or more lines when placed (1 line is the fallback), in any order, independent of each other (all three use rows, or all use columns).
 - Game over when none of the remaining tray pieces fits anywhere.
-- Continue (code name "revive"): up to 3 per run via a rewarded ad; empties the two fullest rows, deals a fresh tray, resets the combo.
+- Continue (code name "revive"): up to 3 per run, paid by a rewarded ad or by `continueCoinCost = 50` coins (both count against the same limit); empties the two fullest rows, deals a fresh tray, resets the combo.
 - Best score is saved locally (and to the Play Games leaderboard when enabled).
 
 ## 4. Content
@@ -43,7 +43,12 @@ Piece catalogue in `lib/game/rules/piece.dart` (weighted). Dealing (`piece_gener
 Daily reward cycle, streaks (+ freeze), daily challenges, achievements: all ON (`retention` in `app.config.yaml`).
 
 ## 6. Monetization
-Banner on the game screen; interstitials paced by `ads` in `app.config.yaml` (min 90 s apart, every 2nd game over, max 6 per session, none in the first 60 s); rewarded ad for revive. IAP in `products.yaml` (remove ads, coin pack). Ads are child-directed with max content rating G. Release AdMob IDs are in `app.config.yaml`; debug uses Google's test IDs.
+Banner on the game screen; interstitials paced by `ads` in `app.config.yaml` (min 90 s apart, every 2nd game over, max 6 per session, none in the first 60 s); rewarded ad for Continue. IAP in `products.yaml`: `remove_ads_all` (non-consumable, "Remove Ads", removes **all** ads), `coins_500` "Coin Pack", `coins_1500` "Big Coin Pack", `coins_4000` "Coin Chest" (consumable). The retired id `remove_ads` is never sold; a saved `remove_ads` entitlement or restore still counts as owned.
+- **Remove Ads removes all ads**: no banner, no interstitial and no rewarded ad; Continue is granted at once (up to 3 per run).
+- Shop order: Remove Ads, then coin packs in ascending size; products the store does not return stay hidden, or "Store unavailable". Coin pack text says what coins are for ("Use coins to continue after a game over"); wording never pressures children.
+- Coins are drawn with the code-made `CoinIcon` (gold coin, darker rim, inner ring, shine, letters MC; Semantics label "coins"); `Icons.monetization_on` is not used.
+- **Parent gate** (`ParentGate` dialog, "Ask a grown-up") before every real-money purchase (not Restore, not spending coins): typed answer to a multiplication with factors 6 to 9, new numbers after each wrong answer; 3 wrong in a row close the dialog and lock purchases for 60 s. Test IDs `gate.dialog`, `gate.answer`, `gate.submit`, `gate.cancel`.
+- Ads are child-directed with max content rating G. Release AdMob IDs are in `app.config.yaml`; debug uses Google's test IDs.
 
 ## 7. Screens
 Home, game, game over (overlay), daily reward, challenges and achievements, shop, settings. Every interactive widget has a key in `lib/ui/test_ids.dart`. Screens use named routes so each is deep-linkable.
@@ -116,6 +121,7 @@ Game over screen layout:
 - Player-facing wording is "Continue" (code and test IDs still say "revive"); the label is the constant `continueLabel` in `lib/ui/game_screen.dart`. Text: `Continue · N left`, details line `Continues left: N`.
 - Order top to bottom inside the panel: small ghost Share icon button at the top left; title, score, best score; **Play again** and **Home** side by side; **Continue** last, at the bottom: gold primary, font 22, padding 28x16, hidden when no continue is left.
 - Play again: secondary style (regular, 16) while Continue is offered; when Continue is unavailable it takes the large gold style (22, 28x16).
+- Continue button: with Remove Ads owned it continues at once (no ad, no coins); with fewer than 50 coins it goes straight to the rewarded ad; with 50 coins or more it opens a small choice "Watch an ad (free)" (`game.over.continue.ad`) and "Use 50 coins" with the coin icon (`game.over.continue.coins`). Spending coins needs no parent gate.
 - Test IDs: `game.over.revive` (Continue), `game.over.retry` (Play again), `game.over.home`, `game.over.share`, `game.over.dialog`, plus `game.over.panel` and `game.over.view`.
 - No tip is ever shown on the game over screen.
 - A drag follows the finger with the offsets in section 13 and the ghost preview shows where it will snap.

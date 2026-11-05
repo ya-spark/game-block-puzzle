@@ -73,9 +73,19 @@ void main() {
       File('products.yaml').readAsStringSync(),
     );
 
+    test('lists remove ads then three coin packs', () {
+      expect(catalog.products.map((p) => p.id).toList(), [
+        'remove_ads_all',
+        'coins_500',
+        'coins_1500',
+        'coins_4000',
+      ]);
+      expect(catalog.byId('coins_4000')?.coins, 4000);
+    });
+
     test('has remove_ads and a coin pack', () {
-      expect(catalog.byId('remove_ads')?.type, ProductType.nonConsumable);
-      expect(catalog.byId('remove_ads')?.grants, ProductDef.removeAdsGrant);
+      expect(catalog.byId('remove_ads_all')?.type, ProductType.nonConsumable);
+      expect(catalog.byId('remove_ads_all')?.grants, ProductDef.removeAdsGrant);
       expect(
         catalog.products.any(
           (p) => p.type == ProductType.consumable && p.coins > 0,
