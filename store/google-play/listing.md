@@ -19,3 +19,4 @@ continue after a game over.
 
 **Category:** Games > Puzzle
 **Content rating notes:** No violence, no user-generated content, no multiplayer. Contains ads.
+**Contact email (public):** ggprouser@gmail.com

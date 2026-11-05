@@ -25,6 +25,9 @@ class SaveData {
     this.voiceOn = true,
     this.leftHanded = false,
     this.themeIndex = 0,
+    this.tipsOff = false,
+    this.tipHomeDay = -1,
+    this.seenHints = const {},
   });
 
   /// Bump when the JSON shape changes and add a step to [SaveMigrator].
@@ -62,6 +65,15 @@ class SaveData {
   /// Position in the theme rotation (`ThemeRotation`); a new game continues from it.
   final int themeIndex;
 
+  /// Tips are turned off ("Don't show tips again" ticked, or the settings switch is off).
+  final bool tipsOff;
+
+  /// Day index on which the home tip of the day was closed.
+  final int tipHomeDay;
+
+  /// One-time hints already shown.
+  final Set<String> seenHints;
+
   SaveData copyWith({
     int? coins,
     int? bestScore,
@@ -82,6 +94,9 @@ class SaveData {
     bool? voiceOn,
     bool? leftHanded,
     int? themeIndex,
+    bool? tipsOff,
+    int? tipHomeDay,
+    Set<String>? seenHints,
   }) => SaveData(
     coins: coins ?? this.coins,
     bestScore: bestScore ?? this.bestScore,
@@ -102,6 +117,9 @@ class SaveData {
     voiceOn: voiceOn ?? this.voiceOn,
     leftHanded: leftHanded ?? this.leftHanded,
     themeIndex: themeIndex ?? this.themeIndex,
+    tipsOff: tipsOff ?? this.tipsOff,
+    tipHomeDay: tipHomeDay ?? this.tipHomeDay,
+    seenHints: seenHints ?? this.seenHints,
   );
 
   Map<String, Object?> toJson() => {
@@ -125,6 +143,9 @@ class SaveData {
     'voiceOn': voiceOn,
     'leftHanded': leftHanded,
     'themeIndex': themeIndex,
+    'tipsOff': tipsOff,
+    'tipHomeDay': tipHomeDay,
+    'seenHints': seenHints.toList()..sort(),
   };
 
   /// Expects JSON already migrated to [currentVersion].
@@ -155,6 +176,9 @@ class SaveData {
     voiceOn: j['voiceOn'] as bool? ?? true,
     leftHanded: j['leftHanded'] as bool? ?? false,
     themeIndex: ((j['themeIndex'] as num?)?.toInt() ?? 0).abs(),
+    tipsOff: j['tipsOff'] as bool? ?? false,
+    tipHomeDay: (j['tipHomeDay'] as num?)?.toInt() ?? -1,
+    seenHints: {...?(j['seenHints'] as List?)?.cast<String>()},
   );
 
   static Map<String, Object?>? _map(Object? o) =>

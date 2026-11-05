@@ -12,12 +12,16 @@ import 'package:block_puzzle/core/purchase/purchase_service.dart';
 import 'package:block_puzzle/core/remote_config/remote_config_service.dart';
 import 'package:block_puzzle/core/save/save_service.dart';
 import 'package:block_puzzle/core/services.dart';
+import 'package:block_puzzle/core/share/share_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Services wired with fakes (no plugins, no network). Reads the real config files.
 Future<Services> buildFakeServices({
   FakeAdService? ads,
   DateTime Function()? clock,
+  FakeShareService? share,
+  bool appLinkEnabled = false,
+  bool tips = false,
 }) async {
   SharedPreferences.setMockInitialValues({});
   final prefs = await SharedPreferences.getInstance();
@@ -33,6 +37,8 @@ Future<Services> buildFakeServices({
     clock: clock,
   );
   await profile.init();
+  // Tips are off by default in tests so cards never move the buttons other tests tap.
+  if (!tips) await profile.setTipsEnabled(false);
   final services = Services(
     config: config,
     catalog: catalog,
@@ -45,6 +51,7 @@ Future<Services> buildFakeServices({
     analytics: const NoopAnalyticsService(),
     remoteConfig: const NoopRemoteConfigService(),
     profile: profile,
+    share: share ?? FakeShareService(appLinkEnabled: appLinkEnabled),
   );
   services.wirePurchases();
   return services;

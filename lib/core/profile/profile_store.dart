@@ -212,6 +212,21 @@ class ProfileStore extends ChangeNotifier {
   Future<void> setVibration(bool v) => _commit(_data.copyWith(vibrationOn: v));
   Future<void> setReminders(bool v) => _commit(_data.copyWith(remindersOn: v));
 
+  // ---- tips ---------------------------------------------------------------
+
+  /// Tips on/off: the "Don't show tips again" checkbox and the settings switch share this.
+  bool get tipsEnabled => !_data.tipsOff;
+  Future<void> setTipsEnabled(bool v) => _commit(_data.copyWith(tipsOff: !v));
+
+  /// The home tip of the day has not been closed today.
+  bool get homeTipPending => tipsEnabled && _data.tipHomeDay != today;
+  Future<void> closeHomeTip() => _commit(_data.copyWith(tipHomeDay: today));
+
+  /// True when the one-time hint [id] may be shown now (tips on, never shown before).
+  bool hintDue(String id) => tipsEnabled && !_data.seenHints.contains(id);
+  Future<void> markHintSeen(String id) =>
+      _commit(_data.copyWith(seenHints: {..._data.seenHints, id}));
+
   // ---- purchases ----------------------------------------------------------
 
   /// Delivers a purchase/restore once. Replays of the same purchaseId are ignored;

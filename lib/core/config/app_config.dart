@@ -73,6 +73,13 @@ class RetentionConfig {
   final bool achievements;
 }
 
+class ShareConfig {
+  const ShareConfig({this.appLinkEnabled = false});
+
+  /// Append the Play Store link to share texts and show "Share app". Off until the game is live.
+  final bool appLinkEnabled;
+}
+
 class PlatformsConfig {
   const PlatformsConfig({
     this.android = true,
@@ -111,6 +118,7 @@ class AppConfig {
     required this.adPacing,
     required this.retention,
     required this.playGames,
+    this.share = const ShareConfig(),
   });
 
   final String appId;
@@ -124,6 +132,11 @@ class AppConfig {
   final AdPacingConfig adPacing;
   final RetentionConfig retention;
   final PlayGamesConfig playGames;
+  final ShareConfig share;
+
+  /// Play Store page of this game, built from the package name.
+  String get storeLink =>
+      'https://play.google.com/store/apps/details?id=$packageName';
 
   /// IDs to use for the current build mode. Debug always yields test IDs.
   AdmobIds admobFor({required bool release}) {
@@ -146,6 +159,7 @@ class AppConfig {
     final ads = (root['ads'] as YamlMap?) ?? YamlMap();
     final ret = (root['retention'] as YamlMap?) ?? YamlMap();
     final pg = (root['play_games'] as YamlMap?) ?? YamlMap();
+    final share = (root['share'] as YamlMap?) ?? YamlMap();
     bool enabled(Object? p) =>
         p is YamlMap ? (p['enabled'] as bool? ?? false) : false;
     return AppConfig(
@@ -179,6 +193,9 @@ class AppConfig {
         streaks: ret['streaks'] as bool? ?? true,
         dailyChallenges: ret['daily_challenges'] as bool? ?? true,
         achievements: ret['achievements'] as bool? ?? true,
+      ),
+      share: ShareConfig(
+        appLinkEnabled: share['app_link_enabled'] as bool? ?? false,
       ),
       playGames: PlayGamesConfig(
         enabled: pg['enabled'] as bool? ?? false,

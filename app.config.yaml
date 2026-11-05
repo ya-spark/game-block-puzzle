@@ -44,6 +44,11 @@ ads:
   child_directed: true
   max_ad_content_rating: G
 
+# Sharing through the system share sheet. The store link is added to share texts and "Share app"
+# is shown only when this is true; the owner turns it on once the game is live.
+share:
+  app_link_enabled: false
+
 # Retention features, all ON by default.
 retention:
   daily_reward: true

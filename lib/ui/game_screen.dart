@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -8,9 +10,12 @@ import '../core/profile/profile_store.dart';
 import '../core/services.dart';
 import '../game/flame/block_puzzle_game.dart';
 import '../game/rules/game_state.dart';
+import '../game/rules/piece.dart';
 import 'game_over_panel.dart';
+import 'share_card.dart';
 import 'test_ids.dart';
 import 'theme_background.dart';
+import 'tip_card.dart';
 
 /// Player-facing name of the rewarded-ad second chance on the game over screen (rename it here only).
 const String continueLabel = 'Continue';
@@ -33,6 +38,58 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   bool _warned = false;
   ProfileStore? _profile;
 
+  /// Game overs shown this session; a tip appears on every 2nd one.
+  int _gameOvers = 0;
+
+  /// One-time hint on screen (id and text), hidden after [_hintDuration].
+  String? _hintId;
+  String? _hintText;
+  Timer? _hintTimer;
+  static const _hintDuration = Duration(seconds: 4);
+  static const _hints = {
+    'gem': 'A gem! Clear its line to earn bonus points and a coin.',
+    'boom': 'A Boom block! Clear its line to empty the 3x3 area around it.',
+    'gold': 'A golden block! Clear its line to start Gold Rush.',
+    'rush': 'Gold Rush! Your points are doubled for the next moves.',
+  };
+
+  /// Shows the one-time hint [id] if tips are on, it was never shown, and none is showing.
+  void _maybeHint(Services s, String id) {
+    if (_hintId != null || !mounted || !s.profile.hintDue(id)) return;
+    s.profile.markHintSeen(id);
+    _hintTimer?.cancel();
+    setState(() {
+      _hintId = id;
+      _hintText = _hints[id];
+    });
+    _hintTimer = Timer(_hintDuration, _hideHint);
+  }
+
+  void _hideHint() {
+    _hintTimer?.cancel();
+    if (!mounted) return;
+    setState(() => _hintId = null);
+  }
+
+  /// Hints for special blocks that just appeared in the tray, and for a running Gold Rush.
+  void _checkHints(Services s, BlockPuzzleGame game) {
+    if (game.state.rushLeft > 0) _maybeHint(s, 'rush');
+    for (final p in game.state.tray.whereType<Piece>()) {
+      for (var i = 0; i < p.cells.length; i++) {
+        switch (p.kindAt(i)) {
+          case CellKind.gem:
+            _maybeHint(s, 'gem');
+          case CellKind.boom:
+            _maybeHint(s, 'boom');
+          case CellKind.gold:
+            _maybeHint(s, 'gold');
+          case CellKind.normal:
+            break;
+        }
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +98,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _hintTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     _profile?.removeListener(_applyAudio);
     _audio.dispose();
@@ -89,8 +147,13 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         HapticFeedback.mediumImpact();
       }
     };
-    game.onChanged = () => setState(() {});
+    game.onChanged = () {
+      if (!mounted) return;
+      _checkHints(s, game);
+      setState(() {});
+    };
     game.onGameOver = () {
+      _gameOvers++;
       if (game.state.score > s.profile.data.bestScore) {
         _audio.voice('better_than_the_best');
       } else {
@@ -171,55 +234,90 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (_dialogOpen || !mounted) return;
     _dialogOpen = true;
     final game = _game!;
+    final tip = s.profile.tipsEnabled && _gameOvers.isEven
+        ? s.tips.next()
+        : null;
+    var tipClosed = false;
     final action = await showDialog<String>(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.transparent,
-      builder: (ctx) => GameOverPanel(
-        key: TestIds.gameOverDialog,
-        title: 'Game over',
-        details: [
-          Text(
-            'Score ${game.state.score}',
-            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
-          ),
-          Text('Best ${game.state.bestScore}'),
-          if (game.state.canRevive)
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialog) => GameOverPanel(
+          key: TestIds.gameOverDialog,
+          title: 'Game over',
+          details: [
             Text(
-              'Continues left: ${game.state.revivesRemaining}',
-              key: TestIds.gameOverRevivesLeft,
+              'Score ${game.state.score}',
+              style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
             ),
-        ],
-        buttons: [
-          if (game.state.canRevive)
+            Text('Best ${game.state.bestScore}'),
+            if (game.state.canRevive)
+              Text(
+                'Continues left: ${game.state.revivesRemaining}',
+                key: TestIds.gameOverRevivesLeft,
+              ),
+            if (tip != null && !tipClosed && s.profile.tipsEnabled)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: TipCard(
+                  key: TestIds.tipGameOver,
+                  text: tip,
+                  onClose: () => setDialog(() => tipClosed = true),
+                ),
+              ),
+          ],
+          buttons: [
+            if (game.state.canRevive)
+              GameOverButton(
+                key: TestIds.gameOverRevive,
+                kind: GameOverButtonKind.primary,
+                size: GameOverButtonSize.large,
+                icon: Icons.smart_display,
+                label: '$continueLabel · ${game.state.revivesRemaining} left',
+                onPressed: () => Navigator.pop(ctx, 'revive'),
+              ),
             GameOverButton(
-              key: TestIds.gameOverRevive,
-              kind: GameOverButtonKind.primary,
-              size: GameOverButtonSize.large,
-              icon: Icons.smart_display,
-              label: '$continueLabel · ${game.state.revivesRemaining} left',
-              onPressed: () => Navigator.pop(ctx, 'revive'),
+              key: TestIds.gameOverRetry,
+              kind: game.state.canRevive
+                  ? GameOverButtonKind.secondary
+                  : GameOverButtonKind.primary,
+              size: game.state.canRevive
+                  ? GameOverButtonSize.compact
+                  : GameOverButtonSize.large,
+              icon: Icons.replay,
+              label: 'Play again',
+              onPressed: () => Navigator.pop(ctx, 'retry'),
             ),
-          GameOverButton(
-            key: TestIds.gameOverRetry,
-            kind: game.state.canRevive
-                ? GameOverButtonKind.secondary
-                : GameOverButtonKind.primary,
-            size: game.state.canRevive
-                ? GameOverButtonSize.compact
-                : GameOverButtonSize.large,
-            icon: Icons.replay,
-            label: 'Play again',
-            onPressed: () => Navigator.pop(ctx, 'retry'),
-          ),
-          GameOverButton(
-            key: TestIds.gameOverHome,
-            kind: GameOverButtonKind.ghost,
-            icon: Icons.home,
-            label: 'Home',
-            onPressed: () => Navigator.pop(ctx, 'home'),
-          ),
-        ],
+            GameOverButton(
+              key: TestIds.gameOverHome,
+              kind: GameOverButtonKind.ghost,
+              icon: Icons.home,
+              label: 'Home',
+              onPressed: () => Navigator.pop(ctx, 'home'),
+            ),
+            GameOverButton(
+              key: TestIds.gameOverShare,
+              kind: GameOverButtonKind.ghost,
+              size: GameOverButtonSize.compact,
+              icon: Icons.share,
+              semanticLabel: 'Share',
+              onPressed: () async {
+                final png = await captureShareCard(
+                  ctx,
+                  ShareCardData(
+                    gameName: s.config.displayName,
+                    headline: 'Score',
+                    big: '${game.state.score}',
+                    best: game.state.bestScore,
+                    theme: game.theme,
+                  ),
+                );
+                await s.share.shareScore(score: game.state.score, image: png);
+              },
+            ),
+          ],
+        ),
       ),
     );
     _dialogOpen = false;
@@ -254,89 +352,109 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     return Scaffold(
       body: ThemeBackground(
         theme: game.theme,
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Invisible; the current theme id is its Semantics value (tests, bot).
-              Semantics(
-                key: TestIds.gameTheme,
-                identifier: 'game.theme',
-                value: game.theme.id,
-                child: const SizedBox.shrink(),
-              ),
-              // One compact header row (back, score, best) plus a one-line streak
-              // strip, so the play area below keeps room for the piece tray.
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    // Score is centred on the screen, independent of the side buttons.
-                    _ScorePill(score: game.state.score),
-                    Row(
-                      textDirection: s.profile.data.leftHanded
-                          ? TextDirection.rtl
-                          : TextDirection.ltr,
+        child: Stack(
+          children: [
+            SafeArea(
+              child: Column(
+                children: [
+                  // Invisible; the current theme id is its Semantics value (tests, bot).
+                  Semantics(
+                    key: TestIds.gameTheme,
+                    identifier: 'game.theme',
+                    value: game.theme.id,
+                    child: const SizedBox.shrink(),
+                  ),
+                  // One compact header row (back, score, best) plus a one-line streak
+                  // strip, so the play area below keeps room for the piece tray.
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 0),
+                    child: Stack(
+                      alignment: Alignment.center,
                       children: [
-                        IconButton.filledTonal(
-                          key: TestIds.gameBack,
-                          icon: Icon(
-                            s.profile.data.leftHanded
-                                ? Icons.chevron_right
-                                : Icons.chevron_left,
-                          ),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0x0FFFFFFF),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(
-                                Icons.star_rounded,
-                                color: Color(0xFFFFC145),
-                                size: 18,
+                        // Score is centred on the screen, independent of the side buttons.
+                        _ScorePill(score: game.state.score),
+                        Row(
+                          textDirection: s.profile.data.leftHanded
+                              ? TextDirection.rtl
+                              : TextDirection.ltr,
+                          children: [
+                            IconButton.filledTonal(
+                              key: TestIds.gameBack,
+                              icon: Icon(
+                                s.profile.data.leftHanded
+                                    ? Icons.chevron_right
+                                    : Icons.chevron_left,
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                '${game.state.bestScore}',
-                                key: TestIds.gameBest,
-                                style: const TextStyle(
-                                  color: Color(0xFFFFC145),
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                            const Spacer(),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7,
                               ),
-                            ],
-                          ),
+                              decoration: BoxDecoration(
+                                color: const Color(0x0FFFFFFF),
+                                borderRadius: BorderRadius.circular(18),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.star_rounded,
+                                    color: Color(0xFFFFC145),
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    '${game.state.bestScore}',
+                                    key: TestIds.gameBest,
+                                    style: const TextStyle(
+                                      color: Color(0xFFFFC145),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
+                  ),
+                  _StreakBar(
+                    streak: s.profile.displayStreak,
+                    combo: game.state.comboStreak,
+                    rushLeft: game.state.rushLeft,
+                    showStreak: s.config.retention.streaks,
+                  ),
+                  Expanded(
+                    child: GameWidget<BlockPuzzleGame>(
+                      key: TestIds.gameWidget,
+                      game: game,
+                    ),
+                  ),
+                  KeyedSubtree(
+                    key: TestIds.gameBanner,
+                    child: s.ads.buildBanner(),
+                  ),
+                ],
+              ),
+            ),
+            if (_hintId != null && s.profile.tipsEnabled)
+              Positioned(
+                bottom: 70,
+                left: 16,
+                right: 16,
+                child: Center(
+                  child: TipCard(
+                    key: TestIds.tipHint,
+                    text: _hintText ?? '',
+                    onClose: _hideHint,
+                  ),
                 ),
               ),
-              _StreakBar(
-                streak: s.profile.displayStreak,
-                combo: game.state.comboStreak,
-                rushLeft: game.state.rushLeft,
-                showStreak: s.config.retention.streaks,
-              ),
-              Expanded(
-                child: GameWidget<BlockPuzzleGame>(
-                  key: TestIds.gameWidget,
-                  game: game,
-                ),
-              ),
-              KeyedSubtree(key: TestIds.gameBanner, child: s.ads.buildBanner()),
-            ],
-          ),
+          ],
         ),
       ),
     );

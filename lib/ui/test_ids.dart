@@ -24,6 +24,7 @@ abstract final class TestIds {
   static const gameOverRevivesLeft = Key('game.over.revivesLeft');
   static const gameOverRetry = Key('game.over.retry');
   static const gameOverHome = Key('game.over.home');
+  static const gameOverShare = Key('game.over.share');
   static const gameBanner = Key('game.banner');
   static const gameStreak = Key('game.streak');
   static const gameCombo = Key('game.combo');
@@ -41,6 +42,7 @@ abstract final class TestIds {
   static Key challengeClaim(String id) => Key('challenge.claim.$id');
   static Key challengeTile(int i) => Key('challenge.tile.$i');
   static Key achievementTile(String id) => Key('achievement.$id');
+  static Key achievementShare(String id) => Key('achievement.share.$id');
 
   // Shop
   static const shopRestore = Key('shop.restore');
@@ -57,4 +59,13 @@ abstract final class TestIds {
   static const settingsAmbience = Key('settings.ambience');
   static const settingsVoice = Key('settings.voice');
   static const settingsHand = Key('settings.hand');
+  static const settingsTips = Key('settings.tips');
+  static const settingsShareApp = Key('settings.shareApp');
+
+  // Tips (this game has no pause screen, so there is no tip.pause)
+  static const tipGameOver = Key('tip.gameover');
+  static const tipHome = Key('tip.home');
+  static const tipHint = Key('tip.hint');
+  static const tipClose = Key('tip.close');
+  static const tipDontShow = Key('tip.dontShow');
 }

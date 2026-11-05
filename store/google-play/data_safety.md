@@ -12,5 +12,7 @@
 | Can users request deletion? | No account is created; uninstall removes local data |
 | Purchases | Handled by Google Play Billing; no payment data received |
 | Play Games sign-in (if enabled) | Player ID / saved game data stored by Google Play Games |
+| Sharing | Optional. The player starts it and picks the target app in the Android share sheet (`share_plus`); the app sends nothing itself and collects nothing. The share picture holds only the game name, the scores and the current look of the game, no name or id |
+| Public contact email | ggprouser@gmail.com |
 
 Also declare in Play Console: **Contains ads = Yes**.

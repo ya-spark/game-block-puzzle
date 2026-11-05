@@ -6,6 +6,7 @@ import 'home_hero.dart';
 import 'routes.dart';
 import 'test_ids.dart';
 import 'theme_background.dart';
+import 'tip_card.dart';
 import 'widgets.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -105,6 +106,13 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                             ),
                         ],
                       ),
+                      if (profile.homeTipPending)
+                        TipCard(
+                          key: TestIds.tipHome,
+                          title: 'Tip of the day',
+                          text: s.tips.tipOfTheDay(profile.today),
+                          onClose: profile.closeHomeTip,
+                        ),
                       const SizedBox(height: 8),
                       MenuButton(
                         key: TestIds.homePlay,

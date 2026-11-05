@@ -54,6 +54,22 @@ Home, game, game over (overlay), daily reward, challenges and achievements, shop
 - One `CustomPainter`, one ticker; it stops while the home route is covered and while the app is in the background.
 - The home background is the current theme's background at the saved `themeIndex`, with the same 1.5 s cross-fade when it changes. The title is white with a dark shadow. Other menu screens keep the plain gradient.
 
+**Sharing** (`lib/core/share/`, `lib/ui/share_card.dart`)
+- `ShareService` (`shareScore`, `shareAchievement`, `shareApp`); `SystemShareService` opens the Android share sheet through `share_plus`, imported only in that file and pinned to the exact version `13.3.1` (same as game-wingy; an exact pin so a share plugin update never changes behaviour or permissions unreviewed). `FakeShareService` records the texts in tests. No Facebook or Instagram SDK. The app sends nothing itself; the player starts sharing and picks the target app.
+- Share card: a widget drawn in code and rendered to a PNG through a `RepaintBoundary` (360x450 at 3x): game name, big score (or achievement title), best score, and the current look (the current theme's background and one block of each colour in its skin). No player name, no id, no store text.
+- Texts: `I scored {score} in {game}! Can you beat it?`, `I unlocked "{title}" in {game}!`, `Try {game}!`. With `share.app_link_enabled` true the store link `https://play.google.com/store/apps/details?id=<package_name>` is appended.
+- Config `share: app_link_enabled: false` in `app.config.yaml` (owner turns it on when the game is live). While false: no link in any text and "Share app" is hidden.
+- Buttons: game over, small ghost Share icon button next to Home (`game.over.share`; Continue / Play again hierarchy unchanged); each unlocked achievement has a share icon (`achievement.share.<id>`); Settings "Share app" (`settings.shareApp`) only when the flag is true.
+
+**Tips** (`lib/game/tips.dart`, `lib/core/tips/tip_service.dart`, `lib/ui/tip_card.dart`)
+- 15 tips (at most 80 characters, unique, none mention other games). `TipService` (pure Dart) deals them from a shuffled bag so a tip never repeats back to back, and gives a tip of the day from the day index.
+- Every tip is a small card with a "Don't show tips again" checkbox (`tip.dontShow`) and a Close X (`tip.close`). Close alone hides that tip for now; checkbox + close turns tips off everywhere. Settings "Show tips" switch (`settings.tips`, on by default) is the same saved profile value (`tipsOff`).
+- Game over: one tip under the score on every 2nd game over of the session (`tip.gameover`).
+- Pause: this game has no pause screen, so there is no pause tip.
+- Home: "Tip of the day" card under the stat chips, once per day (`tip.home`; saved `tipHomeDay`); closed, it stays away that day. It sits in the same column below the animated scene and above the buttons.
+- One-time hints, shown once ever (saved `seenHints`) as a small card at the bottom for 4 s with the same checkbox and close (`tip.hint`): first gem (`gem`), Boom block (`boom`), golden block (`gold`) appearing in a dealt tray, and first Gold Rush (`rush`).
+- Test fakes turn tips off by default (`buildFakeServices(tips: true)` turns them on).
+
 ## 8. Art and audio
 Dark teal theme (seed `#2EC4B6`), rounded glossy blocks, kid-friendly colourful menu pages. Narrator voice clips (`assets/voice/`) on clears, combos, new best and game over. Every asset is listed in `assets/LICENSES.md`.
 
