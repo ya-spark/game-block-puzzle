@@ -109,6 +109,60 @@ void main() {
     expect(find.byKey(TestIds.settingsPlayGames), findsNothing);
   });
 
+  testWidgets('sound and hand settings persist and apply', (tester) async {
+    final s = await buildFakeServices();
+    await pumpApp(tester, s);
+    expect(s.profile.data.masterVolume, 1.0);
+    expect(s.profile.data.ambience, 'morning_birds');
+    expect(s.profile.data.voiceOn, isTrue);
+    expect(s.profile.data.leftHanded, isFalse);
+    await tester.tap(find.byKey(TestIds.homeSettings));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(TestIds.settingsVoice));
+    await tester.pumpAndSettle();
+    expect(s.profile.data.voiceOn, isFalse);
+    await tester.tap(find.text('Left'));
+    await tester.pumpAndSettle();
+    expect(s.profile.data.leftHanded, isTrue);
+    await tester.tap(find.byKey(TestIds.settingsAmbience));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Heartbeat').last);
+    await tester.pumpAndSettle();
+    expect(s.profile.data.ambience, 'heartbeat');
+    await tester.drag(
+      find.byKey(TestIds.settingsVolume),
+      const Offset(-1000, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(s.profile.data.masterVolume, 0.0);
+    expect(find.byKey(TestIds.settingsHand), findsOneWidget);
+  });
+
+  testWidgets('left hand mirrors the back button', (tester) async {
+    Future<double> backX(bool left) async {
+      final s = await buildFakeServices();
+      await s.profile.setLeftHanded(left);
+      tester.view.physicalSize = const Size(400, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        ServicesScope(
+          services: s,
+          child: const MaterialApp(home: GameScreen()),
+        ),
+      );
+      await tester.pump();
+      final x = tester.getCenter(find.byKey(TestIds.gameBack)).dx;
+      await tester.pumpWidget(const SizedBox());
+      return x;
+    }
+
+    final right = await backX(false);
+    final left = await backX(true);
+    expect(right, lessThan(200));
+    expect(left, greaterThan(200));
+  });
+
   testWidgets('game: dragging a tray piece onto the board places it', (
     tester,
   ) async {

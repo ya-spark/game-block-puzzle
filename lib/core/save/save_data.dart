@@ -20,6 +20,10 @@ class SaveData {
     this.stats = const LifetimeStats(),
     this.unlockedAchievements = const {},
     this.processedPurchases = const {},
+    this.masterVolume = 1.0,
+    this.ambience = 'morning_birds',
+    this.voiceOn = true,
+    this.leftHanded = false,
   });
 
   /// Bump when the JSON shape changes and add a step to [SaveMigrator].
@@ -46,6 +50,14 @@ class SaveData {
   /// Purchase IDs already delivered, so a replayed purchase is not granted twice.
   final Set<String> processedPurchases;
 
+  /// Master volume 0..1, ambience track id ('off', 'morning_birds', ...), voice switch.
+  final double masterVolume;
+  final String ambience;
+  final bool voiceOn;
+
+  /// Left-handed layout: pause and back mirrored to the other side.
+  final bool leftHanded;
+
   SaveData copyWith({
     int? coins,
     int? bestScore,
@@ -61,6 +73,10 @@ class SaveData {
     LifetimeStats? stats,
     Set<String>? unlockedAchievements,
     Set<String>? processedPurchases,
+    double? masterVolume,
+    String? ambience,
+    bool? voiceOn,
+    bool? leftHanded,
   }) => SaveData(
     coins: coins ?? this.coins,
     bestScore: bestScore ?? this.bestScore,
@@ -76,6 +92,10 @@ class SaveData {
     stats: stats ?? this.stats,
     unlockedAchievements: unlockedAchievements ?? this.unlockedAchievements,
     processedPurchases: processedPurchases ?? this.processedPurchases,
+    masterVolume: masterVolume ?? this.masterVolume,
+    ambience: ambience ?? this.ambience,
+    voiceOn: voiceOn ?? this.voiceOn,
+    leftHanded: leftHanded ?? this.leftHanded,
   );
 
   Map<String, Object?> toJson() => {
@@ -94,6 +114,10 @@ class SaveData {
     'stats': stats.toJson(),
     'unlockedAchievements': unlockedAchievements.toList()..sort(),
     'processedPurchases': processedPurchases.toList()..sort(),
+    'masterVolume': masterVolume,
+    'ambience': ambience,
+    'voiceOn': voiceOn,
+    'leftHanded': leftHanded,
   };
 
   /// Expects JSON already migrated to [currentVersion].
@@ -116,6 +140,13 @@ class SaveData {
     processedPurchases: {
       ...?(j['processedPurchases'] as List?)?.cast<String>(),
     },
+    masterVolume: ((j['masterVolume'] as num?)?.toDouble() ?? 1.0).clamp(
+      0.0,
+      1.0,
+    ),
+    ambience: j['ambience'] as String? ?? 'morning_birds',
+    voiceOn: j['voiceOn'] as bool? ?? true,
+    leftHanded: j['leftHanded'] as bool? ?? false,
   );
 
   static Map<String, Object?>? _map(Object? o) =>

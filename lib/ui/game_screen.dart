@@ -24,17 +24,46 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   BlockPuzzleGame? _game;
   bool _recorded = false;
   bool _dialogOpen = false;
   final AudioService _audio = AudioService();
   bool _warned = false;
+  ProfileStore? _profile;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _profile?.removeListener(_applyAudio);
     _audio.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _audio.startAmbience();
+    } else {
+      _audio.pauseAmbience();
+    }
+  }
+
+  /// Pushes the saved sound settings to the audio service (applied immediately).
+  void _applyAudio() {
+    final d = _profile!.data;
+    _audio.apply(
+      sound: d.soundOn,
+      volume: d.masterVolume,
+      ambience: d.ambience,
+      voice: d.voiceOn,
+    );
   }
 
   BlockPuzzleGame _ensureGame(Services s) {
@@ -42,8 +71,8 @@ class _GameScreenState extends State<GameScreen> {
     if (existing != null) return existing;
     final game =
         widget.game ?? BlockPuzzleGame(bestScore: s.profile.data.bestScore);
+    _profile = s.profile..addListener(_applyAudio);
     game.onPlaced = (o) {
-      _audio.enabled = s.profile.data.soundOn;
       if (!o.gameOver) {
         _praise(o);
         _warnIfCrowded(game);
@@ -54,7 +83,6 @@ class _GameScreenState extends State<GameScreen> {
     };
     game.onChanged = () => setState(() {});
     game.onGameOver = () {
-      _audio.enabled = s.profile.data.soundOn;
       if (game.state.score > s.profile.data.bestScore) {
         _audio.voice('better_than_the_best');
       } else {
@@ -62,7 +90,8 @@ class _GameScreenState extends State<GameScreen> {
       }
       _showGameOver(s);
     };
-    _audio.enabled = s.profile.data.soundOn;
+    _applyAudio();
+    _audio.startAmbience();
     _audio.voice('go');
     return _game = game;
   }
@@ -237,10 +266,17 @@ class _GameScreenState extends State<GameScreen> {
                     // Score is centred on the screen, independent of the side buttons.
                     _ScorePill(score: game.state.score),
                     Row(
+                      textDirection: s.profile.data.leftHanded
+                          ? TextDirection.rtl
+                          : TextDirection.ltr,
                       children: [
                         IconButton.filledTonal(
                           key: TestIds.gameBack,
-                          icon: const Icon(Icons.chevron_left),
+                          icon: Icon(
+                            s.profile.data.leftHanded
+                                ? Icons.chevron_right
+                                : Icons.chevron_left,
+                          ),
                           onPressed: () => Navigator.of(context).pop(),
                         ),
                         const Spacer(),

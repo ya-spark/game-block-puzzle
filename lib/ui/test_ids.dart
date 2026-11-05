@@ -48,4 +48,8 @@ abstract final class TestIds {
   static const settingsReminders = Key('settings.reminders');
   static const settingsPrivacy = Key('settings.privacy');
   static const settingsPlayGames = Key('settings.playGames');
+  static const settingsVolume = Key('settings.volume');
+  static const settingsAmbience = Key('settings.ambience');
+  static const settingsVoice = Key('settings.voice');
+  static const settingsHand = Key('settings.hand');
 }

@@ -37,6 +37,13 @@ Home, game, game over (overlay), daily reward, challenges and achievements, shop
 ## 8. Art and audio
 Dark teal theme (seed `#2EC4B6`), rounded glossy blocks, kid-friendly colourful menu pages. Narrator voice clips (`assets/voice/`) on clears, combos, new best and game over. Every asset is listed in `assets/LICENSES.md`.
 
+**Sound (exact values)**
+- Voice priorities. High: `game_over`, `better_than_the_best`. Normal: `awesome`, `combo`, `excellent`, `fantastic`, `great`, `incredible`, `nice`, `unbelievable`, `unstoppable`, `well_done`, `you_did_it`. Low: `get_ready`, `go`, `careful`.
+- A playing clip is never stopped by a new line. A high line waits for the clip and then plays (the newest waiting high line wins). A normal or low line that arrives while a clip plays is played only if the clip ends within 1 s, otherwise dropped.
+- Background sound (`assets/ambience/`): loops at volume 0.25 (voice 1.0), 0.1 while a voice clip plays, both scaled by Master volume. Starts when the game screen opens, pauses when the app goes to the background, stops when leaving the game screen, keeps playing under game over. Voice and ambience use `mixWithOthers` (no Android audio focus).
+- Settings: **Sound** switch (master mute, on top), **Master volume** slider 0-100 % (default 100 %, test ID `settings.volume`), **Background sound** picker Off / Morning birds (default) / Before sunrise / Heartbeat (`settings.ambience`), **Voice** switch, default on (`settings.voice`). No Effects switch (no effect sounds). All saved in the profile and applied immediately.
+- **Hand** choice Right (default) / Left (`settings.hand`), saved in the profile. There is no pause button or side buttons during play; Left only mirrors the back button to the right side (header row reversed). Board, tray, score and game over screen are unchanged.
+
 ## 9. Play Games
 Sign-in, high-score leaderboard and cloud save, off until `play_games.enabled` in `app.config.yaml`.
 

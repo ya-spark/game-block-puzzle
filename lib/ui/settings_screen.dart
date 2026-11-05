@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../core/audio/audio_service.dart';
 import '../core/services.dart';
 import 'test_ids.dart';
 import 'widgets.dart';
@@ -28,11 +29,64 @@ class SettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
             children: [
               KidPanel(
-                child: SwitchListTile(
-                  key: TestIds.settingsSound,
-                  title: const Text('Sound'),
-                  value: p.data.soundOn,
-                  onChanged: p.setSound,
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      key: TestIds.settingsSound,
+                      title: const Text('Sound'),
+                      subtitle: const Text('Master mute'),
+                      value: p.data.soundOn,
+                      onChanged: p.setSound,
+                    ),
+                    ListTile(
+                      title: Text(
+                        'Master volume: '
+                        '${(p.data.masterVolume * 100).round()}%',
+                      ),
+                      subtitle: Slider(
+                        key: TestIds.settingsVolume,
+                        value: p.data.masterVolume,
+                        divisions: 20,
+                        onChanged: p.setMasterVolume,
+                      ),
+                    ),
+                    ListTile(
+                      title: const Text('Background sound'),
+                      trailing: DropdownButton<String>(
+                        key: TestIds.settingsAmbience,
+                        value: p.data.ambience,
+                        items: [
+                          for (final t in ambienceTracks)
+                            DropdownMenuItem(value: t.$1, child: Text(t.$2)),
+                        ],
+                        onChanged: (v) {
+                          if (v != null) p.setAmbience(v);
+                        },
+                      ),
+                    ),
+                    SwitchListTile(
+                      key: TestIds.settingsVoice,
+                      title: const Text('Voice'),
+                      value: p.data.voiceOn,
+                      onChanged: p.setVoice,
+                    ),
+                  ],
+                ),
+              ),
+              KidPanel(
+                child: ListTile(
+                  title: const Text('Hand'),
+                  subtitle: const Text('Mirrors back'),
+                  trailing: SegmentedButton<bool>(
+                    key: TestIds.settingsHand,
+                    showSelectedIcon: false,
+                    segments: const [
+                      ButtonSegment(value: false, label: Text('Right')),
+                      ButtonSegment(value: true, label: Text('Left')),
+                    ],
+                    selected: {p.data.leftHanded},
+                    onSelectionChanged: (v) => p.setLeftHanded(v.first),
+                  ),
                 ),
               ),
               KidPanel(
