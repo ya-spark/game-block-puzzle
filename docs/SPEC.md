@@ -12,10 +12,10 @@ Second to second: drag a piece to the board, see a ghost preview, release to pla
 Pure Dart in `lib/game/rules/`.
 - Board 8x8; a placed piece must fit entirely on empty cells. No rotation.
 - A full row or column clears (rows and columns can clear together).
-- Score per placement: piece size (cells), plus `10 * lines^2 * combo * stage` when lines clear.
+- Score per placement: piece size (cells), plus `round(10 * lines^2 * combo * stage^stageExponent)` when lines clear.
 - Combo = consecutive placements that cleared lines, `min(streak + 1, maxCombo)` with `maxCombo = 8`; a placement with no clear resets it.
-- `stage = min(1 + linesClearedTotal ~/ 10, maxStage)` with `maxStage = 8` (`GameState.linesPerStage = 10`); stage is 1 until 10 lines are cleared. Stage uses the lines cleared before the placement.
-- Measured (seeded greedy bot, `test/game/start_and_score_test.dart`): a 60-line game scores about 3,970 on average. **The 10,000-12,000 target is NOT met**: maxStage and maxCombo do not affect a 60-line game (combos stay below 8, stage tops out at 7), so the formula needs the owner's decision (stage every 5 lines measured only ~6,050).
+- `stage = min(1 + linesClearedTotal ~/ 5, maxStage)` with `maxStage = 13` (`GameState.linesPerStage = 5`) and `stageExponent = 1.25` (`GameState.stageExponent`); stage is 1 until 5 lines are cleared. Stage uses the lines cleared before the placement. Stage is only the scoring multiplier; nothing else is tied to it.
+- Measured (seeded greedy bot, `test/game/start_and_score_test.dart`, 20 seeds, games reaching 60 lines): a 60-line game scores about 11,068 on average with `maxCombo = 8`, `maxStage = 13`, `stageExponent = 1.25` (1.0 gave ~6,850, 1.2 gave ~10,029). The test asserts the 10,000-12,000 band.
 - Start of a game (not after Continue): a prepared board 70% full (45 of 64 cells, plus or minus 2) with no complete row or column (`lib/game/rules/start_board.dart`, from the game seed). The first tray is three 4-cell pieces; each clears 2 or more lines when placed (1 line is the fallback), in any order, independent of each other (all three use rows, or all use columns).
 - Game over when none of the remaining tray pieces fits anywhere.
 - Continue (code name "revive"): up to 3 per run via a rewarded ad; empties the two fullest rows, deals a fresh tray, resets the combo.
@@ -93,4 +93,4 @@ Code: `lib/game/layout.dart` and `lib/game/flame/block_puzzle_game.dart`. `cell`
 **Piece dealing feel**
 - See section 4 (steady 4-cell preference, kindness falls with lines cleared, no tiny pieces on a roomy board).
 
-**Rescaled goals (5x):** achievements `score_1000` "Five Thousand" (5,000) and `score_5000` "High Roller" (25,000), ids kept; daily "Score N points" targets 1,500 / 3,000 / 5,000. Saved best scores are not migrated.
+**Rescaled goals (~3x, after the faster stage step):** achievements `score_1000` "Fifteen Thousand" (15,000) and `score_5000` "High Roller" (75,000), ids kept; daily "Score N points" targets 5,000 / 10,000 / 15,000. Saved best scores are not migrated.

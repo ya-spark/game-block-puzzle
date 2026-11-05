@@ -59,8 +59,11 @@ class GameState {
   static const int maxCombo = 8;
 
   /// Lines cleared per scoring stage, and the cap of the stage multiplier.
-  static const int linesPerStage = 10;
-  static const int maxStage = 8;
+  static const int linesPerStage = 5;
+  static const int maxStage = 13;
+
+  /// Exponent applied to the stage multiplier in the line bonus (1.0 = linear).
+  static const double stageExponent = 1.25;
 
   final PieceGenerator _generator;
 
@@ -81,7 +84,7 @@ class GameState {
   /// Ad-based revives left in this run (resets with every new [GameState]).
   int get revivesRemaining => maxRevives - revivesUsed;
 
-  /// Stage multiplier for the line bonus: `1 + linesClearedTotal ~/ 10`, at most [maxStage].
+  /// Stage multiplier for the line bonus: `1 + linesClearedTotal ~/ 5`, at most [maxStage].
   int get stage => min(1 + linesClearedTotal ~/ linesPerStage, maxStage);
 
   bool get canRevive => isGameOver && revivesUsed < maxRevives;
@@ -106,7 +109,8 @@ class GameState {
     var multiplier = 1;
     if (lines > 0) {
       multiplier = min(comboStreak + 1, maxCombo);
-      gained += 10 * lines * lines * multiplier * stage;
+      gained += (10 * lines * lines * multiplier * pow(stage, stageExponent))
+          .round();
       comboStreak++;
       linesClearedTotal += lines;
       maxComboReached = max(maxComboReached, multiplier);

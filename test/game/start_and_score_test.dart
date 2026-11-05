@@ -106,9 +106,9 @@ void main() {
   group('Scoring', () {
     test('line bonus is 10 * lines^2 * combo * stage', () {
       expect(GameState.maxCombo, 8);
-      expect(GameState.maxStage, 8);
+      expect(GameState.maxStage, 13);
       final g = GameState(generator: PieceGenerator(Random(3)))
-        ..linesClearedTotal = 25; // stage 3
+        ..linesClearedTotal = 10; // stage 3
       expect(g.stage, 3);
       g.linesClearedTotal = 500;
       expect(g.stage, GameState.maxStage);
@@ -126,10 +126,7 @@ void main() {
       final avg = total / n;
       // ignore: avoid_print
       print('greedy 60-line average score: $avg over $n games');
-      // The owner's target is 10,000 to 12,000, but the greedy bot measures ~3,970 and the
-      // result does not depend on maxStage/maxCombo (combos stay below 8, a 60-line game
-      // only reaches stage 7). Pinned to the measured value until the formula is revisited.
-      expect(avg, inInclusiveRange(3500, 4500));
+      expect(avg, inInclusiveRange(10000, 12000));
     });
   });
 }

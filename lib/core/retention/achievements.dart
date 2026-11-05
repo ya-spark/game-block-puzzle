@@ -126,18 +126,18 @@ abstract final class AchievementEngine {
     ),
     AchievementDef(
       'score_1000',
-      'Five Thousand',
-      'Score 5,000 in one game',
+      'Fifteen Thousand',
+      'Score 15,000 in one game',
       AchievementMetric.bestScore,
-      5000,
+      15000,
       50,
     ),
     AchievementDef(
       'score_5000',
       'High Roller',
-      'Score 25,000 in one game',
+      'Score 75,000 in one game',
       AchievementMetric.bestScore,
-      25000,
+      75000,
       250,
     ),
     AchievementDef(
