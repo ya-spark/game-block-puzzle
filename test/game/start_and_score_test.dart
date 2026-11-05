@@ -8,7 +8,8 @@ import 'package:flutter_test/flutter_test.dart';
 /// Greedy bot: places the piece/position that clears the most lines (ties: most filled
 /// neighbours-free choice = first found). Plays until [targetLines] lines are cleared.
 ({int score, int lines, int pieces}) playGreedy(int seed, int targetLines) {
-  final g = GameState.newGame(generator: PieceGenerator(Random(seed)));
+  // The band measures a game without special blocks (specialEvery 0 deals none).
+  final g = GameState.newGame(generator: PieceGenerator(Random(seed), 0));
   var moves = 0;
   while (!g.isGameOver && g.linesClearedTotal < targetLines && moves < 5000) {
     (int, int, int)? best;

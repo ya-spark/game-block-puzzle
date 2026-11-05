@@ -6,9 +6,26 @@ import 'piece.dart';
 /// Deals pieces. Every dealt piece fits the board on its own whenever any piece does, so a
 /// game never ends by a bad deal alone. Seedable for tests.
 class PieceGenerator {
-  PieceGenerator([Random? random]) : _rng = random ?? Random();
+  /// [specialEvery] = every Nth dealt tray carries one special cell (0 = never).
+  PieceGenerator([Random? random, this.specialEvery = specialEveryNthTray])
+    : _rng = random ?? Random();
 
   final Random _rng;
+
+  /// Every Nth dealt tray has exactly one special cell (the start tray is tray 1).
+  static const int specialEveryNthTray = 4;
+
+  /// Weights of the special kinds: gem 3, boom 2, gold 1.
+  static const List<({CellKind kind, int weight})> specialWeights = [
+    (kind: CellKind.gem, weight: 3),
+    (kind: CellKind.boom, weight: 2),
+    (kind: CellKind.gold, weight: 1),
+  ];
+
+  final int specialEvery;
+
+  /// Trays dealt so far, counting the prepared start tray.
+  int traysDealt = 0;
 
   /// The random source (also used to prepare the start board of a new game).
   Random get random => _rng;
@@ -50,8 +67,51 @@ class PieceGenerator {
   /// below [kindUntilLines] the three pieces can all be played one after another and at least
   /// one clears a line (tried [kindAttempts] times, then relaxed); up to [plainFromLines]
   /// half of the deals are kind; after that the deal is plain.
-  List<Piece> dealTray(Board board, {int count = 3, int linesCleared = 0}) =>
-      recolor(_deal(board, count: count, linesCleared: linesCleared));
+  ///
+  /// Every [specialEvery]th tray gets exactly one special cell (see [addSpecial]); the
+  /// prepared start tray is passed with [allowSpecial] false.
+  List<Piece> dealTray(
+    Board board, {
+    int count = 3,
+    int linesCleared = 0,
+    bool allowSpecial = true,
+  }) {
+    traysDealt++;
+    final tray = recolor(
+      _deal(board, count: count, linesCleared: linesCleared),
+    );
+    if (allowSpecial && specialEvery > 0 && traysDealt % specialEvery == 0) {
+      return addSpecial(tray);
+    }
+    return tray;
+  }
+
+  /// Puts one special cell (weights gem 3, boom 2, gold 1) on a random piece of at
+  /// least 2 cells. Returns [tray] unchanged when no piece qualifies.
+  List<Piece> addSpecial(List<Piece> tray) {
+    final candidates = [
+      for (var i = 0; i < tray.length; i++)
+        if (tray[i].size >= 2) i,
+    ];
+    if (candidates.isEmpty) return tray;
+    final pi = candidates[_rng.nextInt(candidates.length)];
+    final ci = _rng.nextInt(tray[pi].size);
+    var roll = _rng.nextInt(
+      specialWeights.fold<int>(0, (s, w) => s + w.weight),
+    );
+    var kind = specialWeights.last.kind;
+    for (final w in specialWeights) {
+      roll -= w.weight;
+      if (roll < 0) {
+        kind = w.kind;
+        break;
+      }
+    }
+    return [
+      for (var i = 0; i < tray.length; i++)
+        i == pi ? tray[i].withKind(ci, kind) : tray[i],
+    ];
+  }
 
   /// Gives each piece a random colour index (seeded with the generator, so tests are
   /// deterministic). The index is the position in the current theme's palette.

@@ -28,6 +28,17 @@ Piece catalogue in `lib/game/rules/piece.dart` (weighted). Dealing (`piece_gener
 - Difficulty rises through how kind the deal is, by lines cleared in the game: below `kindUntilLines = 20` every deal is kind (all three pieces can be played one after another and at least one clears a line; 50 tries, then the clear-a-line part is dropped, then 50 more tries, then plain). From 20 to `plainFromLines = 60` half of the deals (random) are kind. From 60 the deal is plain (each piece still fits on its own).
 - While the board is at most half full, pieces smaller than 3 cells are not dealt.
 
+**Special blocks and Gold Rush** (code: `CellKind` in `piece.dart`, kinds stored next to the colour in `Board`; dealing in `piece_generator.dart`; effects in `Board.place` and `GameState.place`)
+- Cell kinds: `normal`, `gem`, `boom` ("Boom block"), `gold` ("golden block"). A kind travels with the piece cell onto the board and is cleared with the cell.
+- Dealing: every `specialEveryNthTray = 4`th dealt tray (the prepared start tray is tray 1) has exactly one special cell, on a random piece of at least 2 cells. Kind weights: gem 3, boom 2, gold 1, from the game's seeded generator. The start board and the first tray never have special cells. Every dealt piece still fits and the difficulty rules are unchanged.
+- Effects resolve when a line containing the special cell clears:
+  - Gem: `gemPoints = 50` added to the line base before the combo and stage multipliers (`(10 * lines^2 + 50 * gems) * combo * stage^1.25`), plus 1 coin (same coin balance as shop and daily reward).
+  - Boom block: after the line clear, every filled cell in the 3x3 area around it is emptied (clipped at the edges, no gravity, no chain reaction). Each extra emptied cell scores `blastCellPoints = 5` (flat). Gems emptied by a blast still pay.
+  - Golden block: starts Gold Rush.
+- Gold Rush: for the next `rushPlacements = 5` placements all points of the placement (cells, line bonus, gem, blast) are doubled (`rushMultiplier = 2`), after the combo and stage multipliers. The placement that clears the golden block is not itself doubled. Another golden block during a rush adds `rushExtend = 5` placements, capped at `rushCap = 15`. A new game starts with no rush.
+- Look: each kind is an overlay on top of the current skin in every theme (gem = bright faceted gem, Boom block = friendly star-burst, golden = gold sheen with a star). The blast is a 0.5 s cartoon star burst on each emptied cell (grows and fades, no flashing). During a rush the board has a soft golden shimmer (slow sway, no flashing) and a chip "GOLD RUSH x2 · N" shows the placements left. Test ID `game.rush`: Semantics value = placements left (0 when off).
+- The 60-line simulation band above measures a game without special blocks (the test deals none, `PieceGenerator(random, 0)`).
+
 ## 5. Retention
 Daily reward cycle, streaks (+ freeze), daily challenges, achievements: all ON (`retention` in `app.config.yaml`).
 

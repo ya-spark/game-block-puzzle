@@ -12,6 +12,7 @@ import '../rules/piece_generator.dart';
 import '../rules/snap.dart';
 import '../rules/theme_rotation.dart';
 import '../themes/block_theme.dart';
+import 'special_overlay.dart';
 
 /// Flame renderer for the block puzzle. All rules live in [GameState] (pure Dart);
 /// this class only draws and translates drags into `state.place(...)`.
@@ -99,6 +100,7 @@ class BlockPuzzleGame extends FlameGame {
     final outcome = state.place(slot, row, col);
     if (outcome == null) return;
     view.flash(outcome.clearedRows, outcome.clearedCols);
+    view.blast(outcome.blastCells);
     onPlaced?.call(outcome);
     onChanged?.call();
     if (outcome.gameOver && !wasOver) onGameOver?.call();
@@ -122,6 +124,12 @@ class PuzzleView extends PositionComponent
   List<int> _flashRows = const [];
   List<int> _flashCols = const [];
   double _flashT = 0;
+  double _time = 0;
+
+  /// Seconds the Boom block star burst lasts.
+  static const double blastSeconds = 0.5;
+  List<(int, int)> _blastCells = const [];
+  double _blastT = 0;
 
   /// Theme cross-fade: [_from] fades into [_to]; [_fade] runs 0..1 (1 = settled).
   BlockTheme? _fromTheme;
@@ -146,8 +154,15 @@ class PuzzleView extends PositionComponent
     _flashT = rows.isEmpty && cols.isEmpty ? 0 : 0.35;
   }
 
+  void blast(List<(int, int)> cells) {
+    _blastCells = cells;
+    _blastT = cells.isEmpty ? 0 : blastSeconds;
+  }
+
   @override
   void update(double dt) {
+    _time += dt;
+    if (_blastT > 0) _blastT = max(0, _blastT - dt);
     if (_flashT > 0) _flashT = max(0, _flashT - dt);
     final now = game.theme;
     if (_toTheme == null) {
@@ -268,6 +283,60 @@ class PuzzleView extends PositionComponent
       }
     }
 
+    // Gold Rush: a soft golden shimmer over the board (slow sway, no flashing).
+    if (game.state.rushLeft > 0) {
+      final sway = 0.5 + 0.5 * sin(_time * 1.6);
+      final frame = RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          layout.boardLeft - 4,
+          layout.boardTop - 4,
+          layout.boardSizePx + 8,
+          layout.boardSizePx + 8,
+        ),
+        const Radius.circular(16),
+      );
+      canvas.drawRRect(
+        frame,
+        Paint()
+          ..shader = Gradient.linear(
+            Offset(layout.boardLeft, layout.boardTop),
+            Offset(
+              layout.boardLeft + layout.boardSizePx,
+              layout.boardTop + layout.boardSizePx,
+            ),
+            [
+              Color.fromRGBO(255, 214, 90, 0.10 + 0.06 * sway),
+              Color.fromRGBO(255, 179, 0, 0.05 + 0.05 * (1 - sway)),
+              Color.fromRGBO(255, 214, 90, 0.10 + 0.06 * sway),
+            ],
+            const [0, 0.5, 1],
+          ),
+      );
+      canvas.drawRRect(
+        frame,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3
+          ..color = Color.fromRGBO(255, 200, 40, 0.45 + 0.2 * sway),
+      );
+    }
+
+    // Boom blast: a short cartoon star burst on every emptied cell.
+    if (_blastT > 0) {
+      final t = 1 - _blastT / blastSeconds;
+      for (final (r, c) in _blastCells) {
+        drawBlast(
+          canvas,
+          Offset(
+            layout.boardLeft + (c + 0.5) * cs,
+            layout.boardTop + (r + 0.5) * cs,
+          ),
+          cs,
+          t,
+        );
+      }
+    }
+
     // Line-clear flash.
     if (_flashT > 0) {
       final p = Paint()
@@ -341,6 +410,7 @@ class PuzzleView extends PositionComponent
         );
         if (board.isFilled(r, c)) {
           game.tiles.draw(canvas, theme, board.at(r, c) - 1, rect);
+          drawSpecialOverlay(canvas, board.kindAt(r, c), rect);
         }
       }
     }
@@ -368,13 +438,11 @@ class PuzzleView extends PositionComponent
     double top,
     double cs,
   ) {
-    for (final (dr, dc) in piece.cells) {
-      game.tiles.draw(
-        canvas,
-        theme,
-        piece.colorIndex,
-        Rect.fromLTWH(left + dc * cs, top + dr * cs, cs, cs),
-      );
+    for (var i = 0; i < piece.cells.length; i++) {
+      final (dr, dc) = piece.cells[i];
+      final rect = Rect.fromLTWH(left + dc * cs, top + dr * cs, cs, cs);
+      game.tiles.draw(canvas, theme, piece.colorIndex, rect);
+      drawSpecialOverlay(canvas, piece.kindAt(i), rect);
     }
   }
 }
