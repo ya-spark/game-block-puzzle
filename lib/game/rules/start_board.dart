@@ -35,9 +35,11 @@ class StartBoard {
   }
 
   static StartBoard? _attempt(Random rng, int size, int lines) {
+    // The start tray uses the original L, T and S shapes only (not Z and J), which keeps the
+    // seeded start boards and their tests unchanged.
     final fours = [
       for (final p in PieceCatalog.all)
-        if (p.size == 4) p,
+        if (p.size == 4 && !p.id.startsWith('z4') && !p.id.startsWith('j4')) p,
     ];
     final byRows = rng.nextBool();
     final cells = List<int>.filled(size * size, 0);

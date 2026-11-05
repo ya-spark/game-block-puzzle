@@ -23,6 +23,7 @@ Pure Dart in `lib/game/rules/`.
 
 ## 4. Content
 Piece catalogue in `lib/game/rules/piece.dart` (weighted). Dealing (`piece_generator.dart`):
+- Catalogue (each with its distinct rotations; weight = base weight per orientation, 4-cell shapes then get the `fourCellWeight` preference): dot 2; bars 2/3/4/5 = 4/4/2/1; squares 2/3 = 4/1; corners 3/5 = 4/1; L 3, J 4 (mirror of L), T 3, S 2, Z 3 (mirror of S); plus (5 cells) 1; diagonals of 2 and 3 cells (cells touch only at corners, not edge-connected) 1 each. The ghost preview and drag snap work per cell, so diagonal pieces behave like any other; special cells can sit on any cell of a piece with at least 2 cells, diagonals included. The start tray still uses only the original L, T and S four-cell shapes.
 - Every dealt piece fits the board whenever any piece fits; a dead piece is only dealt when the board is almost full.
 - One fixed piece preference for the whole game: 4-cell pieces have weight `fourCellWeight = 3`, every other shape 1. It is soft: a 4-cell piece that fits nowhere is not dealt.
 - Difficulty rises through how kind the deal is, by lines cleared in the game: below `kindUntilLines = 20` every deal is kind (all three pieces can be played one after another and at least one clears a line; 50 tries, then the clear-a-line part is dropped, then 50 more tries, then plain). From 20 to `plainFromLines = 60` half of the deals (random) are kind. From 60 the deal is plain (each piece still fits on its own).

@@ -84,6 +84,51 @@ void main() {
       }
     });
 
+    test('no two pieces are the same shape; new shapes exist', () {
+      final keys = PieceCatalog.all
+          .map((x) => x.cells.map((c) => '${c.$1},${c.$2}').join(';'))
+          .toList();
+      expect(keys.toSet().length, keys.length);
+      for (final id in ['z4_0', 'z4_1', 'j4_0', 'j4_3', 'plus5_0']) {
+        expect(PieceCatalog.byId(id).id, id);
+      }
+      expect(PieceCatalog.byId('plus5_0').size, 5);
+      expect(PieceCatalog.byId('diag2_1').size, 2);
+      expect(PieceCatalog.byId('diag3_1').size, 3);
+      expect(
+        PieceCatalog.all.where((x) => x.id.startsWith('plus5')),
+        hasLength(1),
+      );
+    });
+
+    test('dealt pieces always fit, diagonals included', () {
+      final gen = PieceGenerator(Random(9), 0);
+      var diagonals = 0;
+      final rows = List.filled(8, '########');
+      rows[0] = '#.#.####';
+      rows[1] = '.#.#####';
+      final board = Board.fromRows(rows);
+      for (var i = 0; i < 300; i++) {
+        for (final piece in gen.dealTray(board)) {
+          expect(board.canPlaceAnywhere(piece), isTrue, reason: piece.id);
+          if (piece.id.startsWith('diag')) diagonals++;
+        }
+      }
+      expect(diagonals, greaterThan(0));
+    });
+
+    test('snap works for a diagonal piece and special cells are allowed', () {
+      final d = p('diag2_0');
+      expect(snapToLegalCell(Board.empty(), d, 2.2, 3.1), (2, 3));
+      final b = Board.empty()
+          .place(PieceCatalog.dot, 3, 3)
+          .board; // blocks (3,3)
+      // top-left (2,2) would need (3,3): not legal; nearest legal cell is used.
+      expect(snapToLegalCell(b, d, 2, 2), isNot((2, 2)));
+      final g = PieceGenerator(Random(1)).addSpecial([d.withColor(0)]);
+      expect(g.single.hasSpecial, isTrue);
+    });
+
     test('every piece fits on an empty board', () {
       for (final piece in PieceCatalog.all) {
         expect(Board.empty().canPlaceAnywhere(piece), isTrue, reason: piece.id);

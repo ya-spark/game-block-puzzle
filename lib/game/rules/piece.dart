@@ -87,6 +87,12 @@ abstract final class PieceCatalog {
     (name: 'l4', cells: [(0, 0), (1, 0), (2, 0), (2, 1)], weight: 3),
     (name: 't4', cells: [(0, 0), (0, 1), (0, 2), (1, 1)], weight: 3),
     (name: 's4', cells: [(0, 1), (0, 2), (1, 0), (1, 1)], weight: 2),
+    (name: 'z4', cells: [(0, 0), (0, 1), (1, 1), (1, 2)], weight: 3),
+    (name: 'j4', cells: [(0, 1), (1, 1), (2, 0), (2, 1)], weight: 4),
+    (name: 'plus5', cells: [(0, 1), (1, 0), (1, 1), (1, 2), (2, 1)], weight: 1),
+    // Diagonal pieces: cells touch only at corners (not edge-connected).
+    (name: 'diag2', cells: [(0, 0), (1, 1)], weight: 1),
+    (name: 'diag3', cells: [(0, 0), (1, 1), (2, 2)], weight: 1),
   ];
 
   static final List<({Piece piece, int weight})> weighted = _build();
