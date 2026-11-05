@@ -27,7 +27,6 @@ class SaveData {
     this.themeIndex = 0,
     this.tipsOff = false,
     this.tipHomeDay = -1,
-    this.seenHints = const {},
   });
 
   /// Bump when the JSON shape changes and add a step to [SaveMigrator].
@@ -71,9 +70,6 @@ class SaveData {
   /// Day index on which the home tip of the day was closed.
   final int tipHomeDay;
 
-  /// One-time hints already shown.
-  final Set<String> seenHints;
-
   SaveData copyWith({
     int? coins,
     int? bestScore,
@@ -96,7 +92,6 @@ class SaveData {
     int? themeIndex,
     bool? tipsOff,
     int? tipHomeDay,
-    Set<String>? seenHints,
   }) => SaveData(
     coins: coins ?? this.coins,
     bestScore: bestScore ?? this.bestScore,
@@ -119,7 +114,6 @@ class SaveData {
     themeIndex: themeIndex ?? this.themeIndex,
     tipsOff: tipsOff ?? this.tipsOff,
     tipHomeDay: tipHomeDay ?? this.tipHomeDay,
-    seenHints: seenHints ?? this.seenHints,
   );
 
   Map<String, Object?> toJson() => {
@@ -145,7 +139,6 @@ class SaveData {
     'themeIndex': themeIndex,
     'tipsOff': tipsOff,
     'tipHomeDay': tipHomeDay,
-    'seenHints': seenHints.toList()..sort(),
   };
 
   /// Expects JSON already migrated to [currentVersion].
@@ -178,7 +171,6 @@ class SaveData {
     themeIndex: ((j['themeIndex'] as num?)?.toInt() ?? 0).abs(),
     tipsOff: j['tipsOff'] as bool? ?? false,
     tipHomeDay: (j['tipHomeDay'] as num?)?.toInt() ?? -1,
-    seenHints: {...?(j['seenHints'] as List?)?.cast<String>()},
   );
 
   static Map<String, Object?>? _map(Object? o) =>

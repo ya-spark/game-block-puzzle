@@ -44,10 +44,12 @@ ads:
   child_directed: true
   max_ad_content_rating: G
 
-# Sharing through the system share sheet. The store link is added to share texts and "Share app"
-# is shown only when this is true; the owner turns it on once the game is live.
+# Sharing through the system share sheet. link_mode: internal_test (link to the internal test
+# page), store (Play Store page of package_name) or off (no link, "Share app" hidden). An empty
+# internal_test_url behaves like off. The owner switches to store when the game is public.
 share:
-  app_link_enabled: false
+  link_mode: internal_test   # internal_test | store | off
+  internal_test_url: "https://play.google.com/apps/internaltest/4699568684837272672"
 
 # Retention features, all ON by default.
 retention:

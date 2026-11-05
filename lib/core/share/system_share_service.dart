@@ -6,18 +6,12 @@ import 'share_service.dart';
 
 /// Android share sheet through `share_plus`. The only file that imports it.
 class SystemShareService extends BaseShareService {
-  SystemShareService({
-    required this.gameName,
-    required this.storeLink,
-    required this.appLinkEnabled,
-  });
+  SystemShareService({required this.gameName, required this.link});
 
   @override
   final String gameName;
   @override
-  final String storeLink;
-  @override
-  final bool appLinkEnabled;
+  final String? link;
 
   @override
   Future<void> send(String text, Uint8List? image) async {

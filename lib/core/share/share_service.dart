@@ -8,25 +8,32 @@ abstract class ShareService {
 
   Future<void> shareAchievement({required String title, Uint8List? image});
 
-  /// Invites to the game. Does nothing while the app link is disabled.
+  /// True when share texts carry a link (and "Share app" is shown).
+  bool get hasLink;
+
+  /// Invites to the game. Does nothing while there is no share link.
   Future<void> shareApp();
 }
 
 /// Builds the texts and delegates the actual sending to [send].
 abstract class BaseShareService implements ShareService {
   String get gameName;
-  String get storeLink;
-  bool get appLinkEnabled;
 
-  String _withLink(String text) => appLinkEnabled ? '$text $storeLink' : text;
+  /// The link on its own line under the message; null adds none.
+  String? get link;
+
+  @override
+  bool get hasLink => link != null;
+
+  String _withLink(String text) => link == null ? text : '$text\n$link';
 
   String scoreText(int score) =>
-      _withLink('I scored $score in $gameName! Can you beat it?');
+      _withLink('This is my high score in $gameName: $score. Can you beat it?');
 
   String achievementText(String title) =>
-      _withLink('I unlocked "$title" in $gameName!');
+      _withLink('I unlocked "$title" in $gameName! Can you beat it?');
 
-  String appText() => _withLink('Try $gameName!');
+  String appText() => _withLink('Try $gameName! Can you beat my score?');
 
   Future<void> send(String text, Uint8List? image);
 
@@ -40,25 +47,19 @@ abstract class BaseShareService implements ShareService {
 
   @override
   Future<void> shareApp() async {
-    if (!appLinkEnabled) return;
+    if (!hasLink) return;
     await send(appText(), null);
   }
 }
 
 /// Records what would be shared (tests).
 class FakeShareService extends BaseShareService {
-  FakeShareService({
-    this.gameName = 'Block Puzzle',
-    this.storeLink = 'https://play.google.com/store/apps/details?id=test',
-    this.appLinkEnabled = false,
-  });
+  FakeShareService({this.gameName = 'Block Puzzle', this.link});
 
   @override
   final String gameName;
   @override
-  final String storeLink;
-  @override
-  final bool appLinkEnabled;
+  final String? link;
 
   final List<({String text, Uint8List? image})> sent = [];
 

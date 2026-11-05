@@ -1,22 +1,38 @@
 import 'package:flutter/material.dart';
 
-/// Game-over overlay: no card and no scrim, just outlined text and glossy pill buttons floating
-/// at the top, so the play field underneath stays fully visible.
-class GameOverPanel extends StatelessWidget {
+import 'test_ids.dart';
+
+/// Game-over overlay: a rounded dark panel (about 90 % opaque, thin light border, soft shadow)
+/// so text and buttons never mix with the game background. Top to bottom: Share (top left),
+/// title, details, Play again + Home side by side, Continue last (large, gold).
+/// The eye button fades the panel out (0.2 s) to show the final board; a tap anywhere, or the
+/// eye button again, brings it back.
+class GameOverPanel extends StatefulWidget {
   const GameOverPanel({
     super.key,
     required this.title,
     required this.details,
-    required this.buttons,
+    required this.share,
+    required this.again,
+    required this.home,
+    this.cont,
   });
 
   final String title;
 
-  /// Score, best, medal... shown under the title.
+  /// Score, best, continues left... shown under the title.
   final List<Widget> details;
-  final List<GameOverButton> buttons;
+  final GameOverButton share;
+  final GameOverButton again;
+  final GameOverButton home;
 
-  /// White text with a dark outline: readable over any background without a panel.
+  /// The rewarded-ad second chance; null when none is left.
+  final GameOverButton? cont;
+
+  /// Panel fill: dark surface at 90 % opacity.
+  static const Color surface = Color(0xE61E1535);
+
+  /// White text with a dark outline: readable over any background.
   static List<Shadow> get outline => const [
     Shadow(color: Color(0xE6000000), blurRadius: 0, offset: Offset(-1.5, -1.5)),
     Shadow(color: Color(0xE6000000), blurRadius: 0, offset: Offset(1.5, -1.5)),
@@ -26,66 +42,130 @@ class GameOverPanel extends StatelessWidget {
   ];
 
   @override
+  State<GameOverPanel> createState() => _GameOverPanelState();
+}
+
+class _GameOverPanelState extends State<GameOverPanel> {
+  bool _hidden = false;
+
+  void _toggle() => setState(() => _hidden = !_hidden);
+
+  @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.topCenter,
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Material(
-            type: MaterialType.transparency,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ShaderMask(
-                  shaderCallback: (r) => const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFFFF3A0), Color(0xFFFFB300)],
-                  ).createShader(r),
-                  child: Text(
-                    title.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 38,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
-                      color: Colors.white,
-                      shadows: outline,
-                    ),
+    final w = widget;
+    return Material(
+      type: MaterialType.transparency,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // While the panel is hidden, a tap anywhere brings it back.
+          if (_hidden)
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _toggle,
+              child: const SizedBox.expand(),
+            ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 380),
+                  child: Stack(
+                    children: [
+                      IgnorePointer(
+                        ignoring: _hidden,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: _hidden ? 0 : 1,
+                          child: _card(w),
+                        ),
+                      ),
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: IconButton(
+                          key: TestIds.gameOverView,
+                          tooltip: _hidden ? 'Show panel' : 'View board',
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(0x66000000),
+                          ),
+                          icon: Icon(
+                            _hidden ? Icons.visibility_off : Icons.visibility,
+                            color: Colors.white,
+                          ),
+                          onPressed: _toggle,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                DefaultTextStyle.merge(
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    shadows: outline,
-                  ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: details,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                // Large buttons each get their own row, the rest share a wrapped row below.
-                for (final b in buttons.where(
-                  (b) => b.size == GameOverButtonSize.large,
-                ))
-                  Padding(padding: const EdgeInsets.only(bottom: 8), child: b),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 10,
-                  runSpacing: 8,
-                  children: buttons
-                      .where((b) => b.size != GameOverButtonSize.large)
-                      .toList(),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+
+  Widget _card(GameOverPanel w) {
+    return Container(
+      key: TestIds.gameOverPanel,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        color: GameOverPanel.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0x55FFFFFF), width: 1),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x80000000),
+            blurRadius: 20,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Align(alignment: Alignment.centerLeft, child: w.share),
+          ShaderMask(
+            shaderCallback: (r) => const LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFFFF3A0), Color(0xFFFFB300)],
+            ).createShader(r),
+            child: Text(
+              w.title.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          DefaultTextStyle.merge(
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+            child: Column(mainAxisSize: MainAxisSize.min, children: w.details),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(child: w.again),
+              const SizedBox(width: 10),
+              Flexible(child: w.home),
+            ],
+          ),
+          if (w.cont != null) ...[const SizedBox(height: 12), w.cont!],
+        ],
       ),
     );
   }
@@ -93,11 +173,12 @@ class GameOverPanel extends StatelessWidget {
 
 enum GameOverButtonKind { primary, secondary, ghost }
 
-/// [large] is the focus action (font 22, padding 28x16, own row); [compact] is the secondary
+/// [large] is the focus action (font 22, padding 28x16); [compact] is the secondary
 /// action (font 15, padding 18x9); [regular] is the default pill.
 enum GameOverButtonSize { large, regular, compact }
 
 /// Glossy pill button: gold for the main action, purple-pink for secondary, glass for ghost.
+/// Label colours keep at least 4.5:1 against their fill and the dark panel.
 class GameOverButton extends StatelessWidget {
   const GameOverButton({
     super.key,
@@ -126,7 +207,7 @@ class GameOverButton extends StatelessWidget {
         const Color(0xFFFFF3A0),
       ),
       GameOverButtonKind.secondary => (
-        const [Color(0xFF8E54E9), Color(0xFFE94E9B)],
+        const [Color(0xFF7B3FD6), Color(0xFFB02F78)],
         Colors.white,
         const Color(0xFFFFD6F2),
       ),
@@ -198,9 +279,6 @@ class GameOverButton extends StatelessWidget {
                               fontSize: fontSize,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 0.5,
-                              shadows: kind == GameOverButtonKind.ghost
-                                  ? GameOverPanel.outline
-                                  : null,
                             ),
                           ),
                         ),

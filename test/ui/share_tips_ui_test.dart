@@ -25,6 +25,7 @@ Future<void> pumpApp(WidgetTester tester, Services s) async {
   addTearDown(tester.view.reset);
   await tester.pumpWidget(GameApp(services: s));
   await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400)); // tip dialog route
 }
 
 Future<void> settle(WidgetTester tester) async {
@@ -95,11 +96,10 @@ void main() {
     expect(bytes.sublist(0, 4), [0x89, 0x50, 0x4E, 0x47]);
   });
 
-  testWidgets('settings.shareApp is hidden while the link flag is off', (
+  testWidgets('settings.shareApp is hidden without a share link', (
     tester,
   ) async {
-    final s = await buildFakeServices();
-    expect(s.config.share.appLinkEnabled, isFalse);
+    final s = await buildFakeServices(); // fake share has no link
     await pumpApp(tester, s);
     await tester.tap(find.byKey(TestIds.homeSettings));
     await settle(tester);
@@ -113,8 +113,23 @@ void main() {
     );
   });
 
+  testWidgets('settings.shareApp shares the link when there is one', (
+    tester,
+  ) async {
+    final share = FakeShareService(link: 'https://example.com/test');
+    final s = await buildFakeServices(share: share);
+    await pumpApp(tester, s);
+    await tester.tap(find.byKey(TestIds.homeSettings));
+    await settle(tester);
+    final item = find.byKey(TestIds.settingsShareApp, skipOffstage: false);
+    await tester.scrollUntilVisible(item, 100);
+    await tester.tap(item);
+    await tester.pump();
+    expect(share.sent.single.text, endsWith('\nhttps://example.com/test'));
+  });
+
   testWidgets('game over share button shares the score text', (tester) async {
-    final share = FakeShareService();
+    final share = FakeShareService(link: 'https://example.com/test');
     final s = await buildFakeServices(share: share);
     await s.profile.setSound(false);
     await pumpGame(tester, s, deadEndState());
@@ -129,27 +144,95 @@ void main() {
       }
     });
     expect(share.sent, hasLength(1));
-    expect(share.sent.single.text, startsWith('I scored '));
+    expect(
+      share.sent.single.text,
+      startsWith('This is my high score in Block Puzzle: '),
+    );
+    expect(share.sent.single.text, endsWith('\nhttps://example.com/test'));
   });
 
-  testWidgets('home tip shows once per day and closing keeps it hidden', (
+  testWidgets('game over panel: layout order, view board and no tips', (
     tester,
   ) async {
+    final s = await buildFakeServices(tips: true);
+    await s.profile.closeHomeTip(); // today's home tip already shown
+    await s.profile.setSound(false);
+    await pumpGame(tester, s, deadEndState());
+    expect(await PuzzleBot(tester).drag(0, 0, 0), isTrue);
+    await settle(tester);
+    expect(find.byKey(TestIds.gameOverPanel), findsOneWidget);
+    expect(find.byKey(TestIds.tipHome), findsNothing);
+    expect(find.byKey(TestIds.tipClose), findsNothing);
+
+    // Share top left, Play again and Home side by side, Continue last.
+    final panel = tester.getRect(find.byKey(TestIds.gameOverPanel));
+    final share = tester.getRect(find.byKey(TestIds.gameOverShare));
+    final again = tester.getRect(find.byKey(TestIds.gameOverRetry));
+    final home = tester.getRect(find.byKey(TestIds.gameOverHome));
+    final cont = tester.getRect(find.byKey(TestIds.gameOverRevive));
+    expect(share.left - panel.left, lessThan(30));
+    expect(share.bottom, lessThanOrEqualTo(again.top));
+    expect((again.center.dy - home.center.dy).abs(), lessThan(2));
+    expect(again.right, lessThan(home.left));
+    expect(cont.top, greaterThanOrEqualTo(again.bottom));
+
+    // Eye button hides the panel; a tap anywhere brings it back.
+    await tester.tap(find.byKey(TestIds.gameOverView));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(
+      tester
+          .widget<AnimatedOpacity>(
+            find.ancestor(
+              of: find.byKey(TestIds.gameOverPanel),
+              matching: find.byType(AnimatedOpacity),
+            ),
+          )
+          .opacity,
+      0,
+    );
+    expect(find.byKey(TestIds.gameOverView), findsOneWidget);
+    await tester.tapAt(const Offset(200, 600));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(
+      tester
+          .widget<AnimatedOpacity>(
+            find.ancestor(
+              of: find.byKey(TestIds.gameOverPanel),
+              matching: find.byType(AnimatedOpacity),
+            ),
+          )
+          .opacity,
+      1,
+    );
+  });
+
+  testWidgets('home tip dialog shows once per day', (tester) async {
     var now = DateTime.utc(2026, 11, 5, 10);
     final s = await buildFakeServices(clock: () => now, tips: true);
     await pumpApp(tester, s);
     expect(find.byKey(TestIds.tipHome), findsOneWidget);
+    expect(find.byType(AlertDialog), findsOneWidget);
     await tester.tap(find.byKey(TestIds.tipClose));
-    await tester.pump();
+    await settle(tester);
     expect(find.byKey(TestIds.tipHome), findsNothing);
     expect(s.profile.tipsEnabled, isTrue);
+    // Not again the same day.
     await s.profile.onAppOpened();
-    await tester.pump();
+    await settle(tester);
     expect(find.byKey(TestIds.tipHome), findsNothing);
+    // Next day: back on a new home page / resume.
     now = DateTime.utc(2026, 11, 6, 10);
     await s.profile.onAppOpened();
-    await tester.pump();
+    expect(s.profile.homeTipPending, isTrue);
+    await tester.pumpWidget(const SizedBox()); // a fresh home page
+    await pumpApp(tester, s);
     expect(find.byKey(TestIds.tipHome), findsOneWidget);
+  });
+
+  testWidgets('home tip dialog never shows when tips are off', (tester) async {
+    final s = await buildFakeServices(); // tips off
+    await pumpApp(tester, s);
+    expect(find.byKey(TestIds.tipHome), findsNothing);
   });
 
   testWidgets('ticking the checkbox turns tips off; the settings switch '
@@ -159,10 +242,9 @@ void main() {
     await tester.tap(find.byKey(TestIds.tipDontShow));
     await tester.pump();
     await tester.tap(find.byKey(TestIds.tipClose));
-    await tester.pump();
+    await settle(tester);
     expect(s.profile.tipsEnabled, isFalse);
     expect(find.byKey(TestIds.tipHome), findsNothing);
-    expect(s.profile.hintDue('gem'), isFalse);
     expect(s.profile.homeTipPending, isFalse);
 
     await tester.tap(find.byKey(TestIds.homeSettings));
@@ -172,68 +254,5 @@ void main() {
     await tester.tap(sw);
     await tester.pump();
     expect(s.profile.tipsEnabled, isTrue);
-    expect(s.profile.hintDue('gem'), isTrue);
-  });
-
-  testWidgets('game over tip shows on every 2nd game over', (tester) async {
-    final s = await buildFakeServices(tips: true);
-    await s.profile.setSound(false);
-    // Hints must not cover anything here.
-    for (final id in ['gem', 'boom', 'gold', 'rush']) {
-      await s.profile.markHintSeen(id);
-    }
-    final game = await pumpGame(tester, s, deadEndState());
-    final bot = PuzzleBot(tester);
-    expect(await bot.drag(0, 0, 0), isTrue);
-    await settle(tester);
-    expect(find.byKey(TestIds.gameOverDialog), findsOneWidget);
-    expect(find.byKey(TestIds.tipGameOver), findsNothing);
-
-    await tester.tap(find.byKey(TestIds.gameOverRetry));
-    await settle(tester);
-    game.state = deadEndState();
-    expect(await bot.drag(0, 0, 0), isTrue);
-    await settle(tester);
-    expect(find.byKey(TestIds.gameOverDialog), findsOneWidget);
-    expect(find.byKey(TestIds.tipGameOver), findsOneWidget);
-    await tester.tap(find.byKey(TestIds.tipClose));
-    await tester.pump();
-    expect(find.byKey(TestIds.tipGameOver), findsNothing);
-    expect(s.profile.tipsEnabled, isTrue);
-
-    await tester.tap(find.byKey(TestIds.gameOverRetry));
-    await settle(tester);
-    game.state = deadEndState();
-    expect(await bot.drag(0, 0, 0), isTrue);
-    await settle(tester);
-    expect(find.byKey(TestIds.tipGameOver), findsNothing);
-  });
-
-  testWidgets('one-time hint shows once, for 4 s', (tester) async {
-    final s = await buildFakeServices(tips: true);
-    await s.profile.setSound(false);
-    final state = GameState(
-      generator: PieceGenerator(Random(1)),
-      board: Board.empty(),
-      tray: [
-        PieceCatalog.dot.withKind(0, CellKind.gem),
-        PieceCatalog.byId('bar2_0'),
-        PieceCatalog.byId('square2_0'),
-      ],
-    );
-    await pumpGame(tester, s, state);
-    final bot = PuzzleBot(tester);
-    expect(find.byKey(TestIds.tipHint), findsNothing);
-    expect(await bot.drag(1, 0, 0), isTrue);
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(find.byKey(TestIds.tipHint), findsOneWidget);
-    expect(s.profile.hintDue('gem'), isFalse);
-    await tester.pump(const Duration(seconds: 4));
-    await tester.pump();
-    expect(find.byKey(TestIds.tipHint), findsNothing);
-    // Never again.
-    expect(await bot.drag(2, 3, 3), isTrue);
-    await tester.pump(const Duration(milliseconds: 100));
-    expect(find.byKey(TestIds.tipHint), findsNothing);
   });
 }

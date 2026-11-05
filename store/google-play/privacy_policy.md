@@ -12,7 +12,7 @@ See https://policies.google.com/technologies/ads.
 
 **Purchases:** Handled by Google Play. We do not receive your payment details.
 
-**Sharing:** If you tap a Share button, Android opens its share sheet with a short text and a picture of your score (game name, score, best score and the current look of the game). You choose the app that receives it. The app itself sends nothing, and the picture contains no name or ID.
+**Sharing:** If you tap a Share button, Android opens its share sheet with a short text (it can include a link to the game's page) and a picture of your score (game name, score, best score and the current look of the game). You choose the app that receives it. The app itself sends nothing, and the picture contains no name or ID.
 
 **Analytics / servers:** The app has no server of its own and does not collect analytics in this version.
 

@@ -57,17 +57,15 @@ Home, game, game over (overlay), daily reward, challenges and achievements, shop
 **Sharing** (`lib/core/share/`, `lib/ui/share_card.dart`)
 - `ShareService` (`shareScore`, `shareAchievement`, `shareApp`); `SystemShareService` opens the Android share sheet through `share_plus`, imported only in that file and pinned to the exact version `13.3.1` (same as game-wingy; an exact pin so a share plugin update never changes behaviour or permissions unreviewed). `FakeShareService` records the texts in tests. No Facebook or Instagram SDK. The app sends nothing itself; the player starts sharing and picks the target app.
 - Share card: a widget drawn in code and rendered to a PNG through a `RepaintBoundary` (360x450 at 3x): game name, big score (or achievement title), best score, and the current look (the current theme's background and one block of each colour in its skin). No player name, no id, no store text.
-- Texts: `I scored {score} in {game}! Can you beat it?`, `I unlocked "{title}" in {game}!`, `Try {game}!`. With `share.app_link_enabled` true the store link `https://play.google.com/store/apps/details?id=<package_name>` is appended.
-- Config `share: app_link_enabled: false` in `app.config.yaml` (owner turns it on when the game is live). While false: no link in any text and "Share app" is hidden.
-- Buttons: game over, small ghost Share icon button next to Home (`game.over.share`; Continue / Play again hierarchy unchanged); each unlocked achievement has a share icon (`achievement.share.<id>`); Settings "Share app" (`settings.shareApp`) only when the flag is true.
+- Texts (the game name always appears; the link, when there is one, follows on a new line): score `This is my high score in {game}: {score}. Can you beat it?`; achievement `I unlocked "{title}" in {game}! Can you beat it?`; Settings "Share app" `Try {game}! Can you beat my score?` with the same link.
+- Config in `app.config.yaml` (replaces `share.app_link_enabled`): `share: link_mode: internal_test | store | off` and `internal_test_url`. `internal_test` (default) uses `internal_test_url` (`https://play.google.com/apps/internaltest/4699568684837272672`); `store` uses `https://play.google.com/store/apps/details?id=<package_name>`; `off` adds no link and hides "Share app". `internal_test` with an empty URL behaves like `off`. The owner switches to `store` when the game is public. Loader: `AppConfig.shareLink` (null = no link).
+- Buttons: game over, small ghost Share icon button at the top left of the panel (`game.over.share`); each unlocked achievement has a share icon (`achievement.share.<id>`); Settings "Share app" (`settings.shareApp`) is visible unless the mode is `off` (no link).
 
-**Tips** (`lib/game/tips.dart`, `lib/core/tips/tip_service.dart`, `lib/ui/tip_card.dart`)
+**Tips** (`lib/game/tips.dart`, `lib/core/tips/tip_service.dart`, `lib/ui/tip_dialog.dart`)
 - 15 tips (at most 80 characters, unique, none mention other games). `TipService` (pure Dart) deals them from a shuffled bag so a tip never repeats back to back, and gives a tip of the day from the day index.
-- Every tip is a small card with a "Don't show tips again" checkbox (`tip.dontShow`) and a Close X (`tip.close`). Close alone hides that tip for now; checkbox + close turns tips off everywhere. Settings "Show tips" switch (`settings.tips`, on by default) is the same saved profile value (`tipsOff`).
-- Game over: one tip under the score on every 2nd game over of the session (`tip.gameover`).
-- Pause: this game has no pause screen, so there is no pause tip.
-- Home: "Tip of the day" card under the stat chips, once per day (`tip.home`; saved `tipHomeDay`); closed, it stays away that day. It sits in the same column below the animated scene and above the buttons.
-- One-time hints, shown once ever (saved `seenHints`) as a small card at the bottom for 4 s with the same checkbox and close (`tip.hint`): first gem (`gem`), Boom block (`boom`), golden block (`gold`) appearing in a dealt tray, and first Gold Rush (`rush`).
+- The only place a tip appears is **one dialog on the home page, once per day**, opened when the home page is first shown that day (`tip.home` is the dialog; saved `tipHomeDay`, set when it opens). It shows the tip of the day, a "Don't show tips again" checkbox (`tip.dontShow`) and Close (`tip.close`). Close alone just closes it; checkbox + Close turns tips off everywhere. It is not shown again the same day, and never when tips are off. The home layout holds no tip card, so the buttons are not pushed down.
+- Never a tip in a game or on the game over screen: no game-over tip, no pause tip (no pause screen), no first-time special-block hints.
+- Settings "Show tips" switch (`settings.tips`, on by default) is the same saved profile value (`tipsOff`).
 - Test fakes turn tips off by default (`buildFakeServices(tips: true)` turns them on).
 
 ## 8. Art and audio
@@ -116,9 +114,10 @@ Backend, Firebase, multiplayer, piece rotation, iOS and web builds.
 
 Game over screen layout:
 - Player-facing wording is "Continue" (code and test IDs still say "revive"); the label is the constant `continueLabel` in `lib/ui/game_screen.dart`. Text: `Continue · N left`, details line `Continues left: N`.
-- Continue: gold primary style, font size 22, padding 28x16, on its own row. Hidden when no continue is left.
-- Play again: secondary style, font size 15, padding 18x9, on the row under Continue next to Home (ghost, unchanged). When Continue is unavailable, Play again takes the large gold style (22, 28x16) on its own row.
-- Test IDs unchanged: `game.over.revive`, `game.over.retry`, `game.over.home`.
+- Order top to bottom inside the panel: small ghost Share icon button at the top left; title, score, best score; **Play again** and **Home** side by side; **Continue** last, at the bottom: gold primary, font 22, padding 28x16, hidden when no continue is left.
+- Play again: secondary style (regular, 16) while Continue is offered; when Continue is unavailable it takes the large gold style (22, 28x16).
+- Test IDs: `game.over.revive` (Continue), `game.over.retry` (Play again), `game.over.home`, `game.over.share`, `game.over.dialog`, plus `game.over.panel` and `game.over.view`.
+- No tip is ever shown on the game over screen.
 - A drag follows the finger with the offsets in section 13 and the ghost preview shows where it will snap.
 - Debug builds use test ad IDs; release builds do not (CI `ad_safety_check.sh`).
 
@@ -140,7 +139,8 @@ Code: `lib/game/layout.dart` and `lib/game/flame/block_puzzle_game.dart`. `cell`
 - A free strip of **0.7 cell** (`bottomGapCells`) stays under the tray for thumbs. On short screens the whole board shrinks instead of squeezing it.
 
 **Game over**
-- Overlay pinned to the top of the screen, no card, no dimming: outlined white text and glossy pill buttons, so the board stays fully visible.
+- Overlay pinned to the top of the screen, no dimming of the board. All content sits in a panel (`game.over.panel`): rounded card (radius 24), solid dark surface `#1E1535` at about 90 % opacity (`0xE6`), thin light border (white at 33 %), soft shadow. Text and buttons keep at least 4.5:1 contrast against the panel (white on the dark surface; secondary buttons use `#7B3FD6` to `#B02F78` with white text; gold buttons use dark brown text).
+- **View board:** a small eye button (`game.over.view`) at the top right of the panel. Tapping it fades the panel out in 0.2 s so the whole final board is visible; a tap anywhere, or the eye button (which stays visible), brings the panel back. The board stays visible and still, and nothing else changes while the panel is hidden (scores and rewards are already final).
 
 **Piece dealing feel**
 - See section 4 (steady 4-cell preference, kindness falls with lines cleared, no tiny pieces on a roomy board).

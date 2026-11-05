@@ -222,11 +222,6 @@ class ProfileStore extends ChangeNotifier {
   bool get homeTipPending => tipsEnabled && _data.tipHomeDay != today;
   Future<void> closeHomeTip() => _commit(_data.copyWith(tipHomeDay: today));
 
-  /// True when the one-time hint [id] may be shown now (tips on, never shown before).
-  bool hintDue(String id) => tipsEnabled && !_data.seenHints.contains(id);
-  Future<void> markHintSeen(String id) =>
-      _commit(_data.copyWith(seenHints: {..._data.seenHints, id}));
-
   // ---- purchases ----------------------------------------------------------
 
   /// Delivers a purchase/restore once. Replays of the same purchaseId are ignored;

@@ -20,7 +20,6 @@ Future<Services> buildFakeServices({
   FakeAdService? ads,
   DateTime Function()? clock,
   FakeShareService? share,
-  bool appLinkEnabled = false,
   bool tips = false,
 }) async {
   SharedPreferences.setMockInitialValues({});
@@ -51,7 +50,7 @@ Future<Services> buildFakeServices({
     analytics: const NoopAnalyticsService(),
     remoteConfig: const NoopRemoteConfigService(),
     profile: profile,
-    share: share ?? FakeShareService(appLinkEnabled: appLinkEnabled),
+    share: share ?? FakeShareService(),
   );
   services.wirePurchases();
   return services;
