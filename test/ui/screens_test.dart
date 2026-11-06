@@ -520,6 +520,32 @@ void main() {
     );
   }
 
+  testWidgets('game: streak, combo and Gold Rush chip fit at 360 wide', (
+    tester,
+  ) async {
+    final s = await buildFakeServices();
+    tester.view.physicalSize = const Size(360, 640);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final game = BlockPuzzleGame(
+      initialState: GameState(generator: PieceGenerator(Random(1), 0)),
+    );
+    await tester.pumpWidget(
+      ServicesScope(
+        services: s,
+        child: MaterialApp(home: GameScreen(game: game)),
+      ),
+    );
+    await PuzzleBot(tester).waitForGame();
+    game.state.rushLeft = 15;
+    game.state.comboStreak = 5;
+    game.onChanged?.call();
+    await tester.pump();
+    expect(find.text('GOLD RUSH x2 · 15'), findsOneWidget);
+    expect(find.byKey(TestIds.gameCombo), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'game over: declined revive ad keeps the dialog and plays again',
     (tester) async {
