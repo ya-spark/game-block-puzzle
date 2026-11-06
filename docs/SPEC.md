@@ -91,9 +91,19 @@ Home, game, game over (overlay), daily reward, challenges and achievements, shop
 **Tips** (`lib/game/tips.dart`, `lib/core/tips/tip_service.dart`, `lib/ui/tip_dialog.dart`)
 - 15 tips (at most 80 characters, unique, none mention other games). `TipService` (pure Dart) deals them from a shuffled bag so a tip never repeats back to back, and gives a tip of the day from the day index.
 - The only place a tip appears is **one dialog on the home page, once per day**, opened when the home page is first shown that day (`tip.home` is the dialog; saved `tipHomeDay`, set when it opens). It shows the tip of the day, a "Don't show tips again" checkbox (`tip.dontShow`) and Close (`tip.close`). Close alone just closes it; checkbox + Close turns tips off everywhere. It is not shown again the same day, and never when tips are off. The home layout holds no tip card, so the buttons are not pushed down.
+- The dialog opens only while the home page is the page on top and no run is on screen (`Services.inRun`, set by the game screen), checked again after the save that marks the tip as shown. A blocked tip is never queued; the next time Home is shown it is tried again (still once per day).
 - Never a tip in a game or on the game over screen: no game-over tip, no pause tip (no pause screen), no first-time special-block hints.
 - Settings "Show tips" switch (`settings.tips`, on by default) is the same saved profile value (`tipsOff`).
 - Test fakes turn tips off by default (`buildFakeServices(tips: true)` turns them on).
+
+**More games** (`lib/ui/more_games_screen.dart`, `moreGames.screen`, `moreGames.back`)
+- Title "More games", header "More from Active Mind Craft". One card per listed game (`moreGames.card.<id>`): a 48 dp rounded tile (12 dp radius) drawn in code (no asset), the name, the tagline, and "Get it" (`moreGames.get.<id>`, status `live`) or the text "Coming soon" (`coming_soon`, no button). "Get it" asks the parent gate first (the same "Ask a grown-up" dialog and lockout as purchases), then `ExternalLinkService.openStorePage(package)` (`market://details?id=<package>`, fallback `https://play.google.com/store/apps/details?id=<package>`). Cancelling the gate opens nothing.
+- Never coins, items or any reward for opening or installing another game (Play bans incentivised installs). Not shown on game over, Continue or in play, and never in place of an interstitial.
+- Entry points: a "More games" row in Settings (`settings.moreGames`, `Icons.apps`, below the tips switch) and a round icon in the Home top-right icon row (`home.moreGames`, see "Behaviour and feel"). No other entry points.
+- The list is bundled: `more_games:` in `app.config.yaml` (`id`, `package_name`, `name`, `tagline`, `status` = `live` | `coming_soon` | `hidden`), loaded into `AppConfig.moreGames`; `AppConfig.visibleMoreGames` drops `hidden` entries and this game's own `package_name`, so the same list is copied to every game. With nothing to show, the Settings row and the Home icon are not shown. No network call, so the privacy policy and Data safety do not change. All entries start `hidden`; the owner flips an entry to `live` when that game is public. Taglines are under 60 characters, name no other studio and use no pressure wording.
+- `ExternalLinkService` (`lib/core/links/`): `openStorePage(packageName)`; `UrlExternalLinkService` is the only file that imports `url_launcher`; `FakeExternalLinkService` records the packages in tests. The Android manifest `<queries>` lists the `market` and `https` VIEW intents.
+
+- Third-party: `url_launcher` 6.3.3 (exact pin, so a plugin update never changes behaviour or permissions unreviewed): opens Play Store pages for "More games"; imported only in `lib/core/links/url_external_link_service.dart`; sends nothing itself.
 
 ## 8. Art and audio
 Dark teal theme (seed `#2EC4B6`), rounded glossy blocks, kid-friendly colourful menu pages. Narrator voice clips (`assets/voice/`) on clears, combos, new best and game over. Every asset is listed in `assets/LICENSES.md`.
@@ -142,6 +152,7 @@ Backend, Firebase, multiplayer, piece rotation, iOS and web builds.
 
 Game over screen layout:
 - Player-facing wording is "Continue" (code and test IDs still say "revive"); the label is the constant `continueLabel` in `lib/ui/game_screen.dart`. Text: `Continue · N left`, details line `Continues left: N`.
+- The card is **vertically centred** in the safe area (`Alignment.center`, 16 dp side padding, 8 dp above and below; owner, 2026-11-06), after the slide-up has finished. The panel (`lib/ui/game_over_panel.dart`) is the same file in every game and the template (Blockfall is the reference); game-specific wording lives only in the callers. It has one optional extra row, `extraButton`, between the Play again / Home row and Continue (14 dp gaps): Wingy uses it for Dash Refill, the other games leave it empty.
 - Order top to bottom inside the panel: small ghost Share icon button at the top left; title, score, best score; **Play again** and **Home** side by side; **Continue** last, at the bottom: gold primary, font 22, padding 28x16, hidden when no continue is left.
 - Play again: secondary style (regular, 16) while Continue is offered; when Continue is unavailable it takes the large gold style (22, 28x16).
 - Continue button: with Remove Ads owned it continues at once (no ad, no coins); otherwise pressing it starts the rewarded ad directly (no choice sheet). A continue is granted only when the ad reports the reward as earned; if the ad fails to load, is not ready or is closed early, nothing is granted, the panel stays open and shows "No ad available right now. Try again in a moment.". Never a fallback to coins or a free continue. The button is hidden after the 3rd continue of a run.
@@ -151,16 +162,20 @@ Game over screen layout:
 - Debug builds use test ad IDs; release builds do not (CI `ad_safety_check.sh`).
 - Boosts: arming and cancelling Blast or Hammer spends nothing; a boost is spent only when applied; none changes score, combo, stage or rush; Undo restores everything including gem coins; per-game caps (2/2/3/1/3) and the 3 ad refills per game hold; every install starts with 1 of each; the new pieces (3x3 square, 2x3 and 3x2 rectangle) fit their tray slot at 360 x 640 dp; the start tray never has a piece of 6 or more cells; the 60-line band (10,000 to 12,000) still holds (measured about 11,461 with the rectangle and `square3` at weight 3).
 - Without Remove Ads, Continue calls the rewarded ad directly (no choice sheet) and spends no coins even with 1000 coins; an ad not earned grants nothing, keeps the panel open and the coin balance unchanged; with Remove Ads it continues with no ad call; the limit of 3 per run holds.
+- More games: the Home icon and the Settings row open the screen; a `live` card shows "Get it", which asks the parent gate before the store page opens (Cancel opens nothing); `coming_soon` has no button; `hidden` entries and this game itself are absent; with nothing listed neither entry point shows; the screen has no coin or reward text (`test/ui/more_games_test.dart`).
+- More games on Home at 360 x 640 dp: the icon row (More games, Shop, Settings) is 48 dp targets 8 dp apart at the top right and overlaps no Home element; Play is 240 x 60 and Daily reward / Challenges are 116 x 52 side by side, with no scrolling.
 
 ## 13. Behaviour and feel (owner decisions, exact values)
 Code: `lib/game/layout.dart` and `lib/game/flame/block_puzzle_game.dart`. `cell` = board cell size.
 
 **Home screen fits without scrolling** (owner, 2026-11-06). Code: `lib/ui/home_screen.dart`, `homeLayout` and `HomeGrid` in `lib/ui/widgets.dart`.
 - At normal text size the whole Home fits with no scrolling on a 360 x 640 dp window, and on taller ones.
-- Order: hero, title, stat chips, **Play** (290 x 76 dp), then a **2 x 2 grid** (290 dp wide, 10 dp gaps) of Daily reward, Challenges, Shop, Settings (compact `MenuButton`, 64 dp tall, icon beside a short label, badges unchanged). A button hidden by `retention` leaves no gap: the grid reflows, and a lone last button spans the row.
-- `HomeHero` is 160 dp when there is room and shrinks down to 96 dp when the space is short. Spacing between groups is 14 dp, and 10 dp when space is short (`homeLayout`).
+- Order (layout v2, owner 2026-11-06, replaces the 2 x 2 grid): a **top-right icon row**, then hero, title, stat chips, **Play** (240 x 60 dp, icon 30, label 24), then **Daily reward and Challenges side by side** in one row (each 116 x 52 dp, 8 dp apart, 240 dp in all, icon 22, label scaled down with `FittedBox` and never wrapping, badges unchanged). If `retention` hides one of the two, the other spans the full 240 dp; if both are hidden the row is gone.
+- **Top-right icon row** (`HomeIconButton` in `lib/ui/widgets.dart`): inside the safe area, 8 dp from the top and right edges, 8 dp between icons, in this order from the right: Settings (`home.settings`, `Icons.settings`), Shop (`home.shop`, `Icons.shopping_basket`), and More games (`home.moreGames`, `Icons.apps`) when at least one other game is listed. Each is a round gradient button, 44 dp visual with a 2 dp white border and a white 24 dp icon, 48 dp tap target (the key sits on the 48 dp target), Semantics labels "Settings", "Shop", "More games". Shop and Settings keep their old colours. The title never overlaps the row at 360 dp wide.
+- `MenuButton` default size is 240 x 52 dp (primary 240 x 60) everywhere it is used.
+- `HomeHero` is 160 dp when there is room and shrinks down to 96 dp when the space is short. Spacing between groups is 10 dp, and 8 dp when space is short (`homeLayout`).
 - A `SingleChildScrollView` stays only as a safety net (very small windows, text scale above 1.3).
-- Test IDs are unchanged. Tests: `test/ui/home_fit_test.dart`.
+- Test IDs are unchanged (`home.shop` and `home.settings` now sit on the icon buttons). Tests: `test/ui/home_fit_test.dart`.
 
 **Drag and drop**
 - Pressing anywhere from 0.25 cell above the tray down to the bottom of the screen, across the full width, picks the tray slot under the press. Thumbs press below the piece, not on it (`traySlotAt`).

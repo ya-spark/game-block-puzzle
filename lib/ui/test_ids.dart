@@ -81,6 +81,14 @@ abstract final class TestIds {
   static const settingsAmbience = Key('settings.ambience');
   static const settingsVoice = Key('settings.voice');
   static const settingsHand = Key('settings.hand');
+  // More games
+  static const homeMoreGames = Key('home.moreGames');
+  static const settingsMoreGames = Key('settings.moreGames');
+  static const moreGamesScreen = Key('moreGames.screen');
+  static const moreGamesBack = Key('moreGames.back');
+  static Key moreGamesCard(String id) => Key('moreGames.card.$id');
+  static Key moreGamesGet(String id) => Key('moreGames.get.$id');
+
   static const settingsTips = Key('settings.tips');
   static const settingsShareApp = Key('settings.shareApp');
 

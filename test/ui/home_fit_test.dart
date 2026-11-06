@@ -37,6 +37,30 @@ void _expectFits(WidgetTester tester, Size size) {
       reason: '$k $r is outside $view',
     );
   }
+  // Home layout v2: Play 240 x 60, Daily reward and Challenges 116 x 52 side by side, 8 dp apart.
+  final play = tester.getRect(find.byKey(TestIds.homePlay));
+  final daily = tester.getRect(find.byKey(TestIds.homeDailyReward));
+  final challenges = tester.getRect(find.byKey(TestIds.homeChallenges));
+  void expectSize(Rect r, double w, double h) {
+    expect(r.width, closeTo(w, 0.5));
+    expect(r.height, closeTo(h, 0.5));
+  }
+
+  expectSize(play, 240, 60);
+  expectSize(daily, 116, 52);
+  expectSize(challenges, 116, 52);
+  expect(challenges.left - daily.right, closeTo(8, 0.5));
+  expect(daily.top, challenges.top);
+  expect(play.overlaps(daily) || play.overlaps(challenges), isFalse);
+  // The Shop and Settings icons: inside the view, 48 dp tap targets, clear of every button.
+  for (final k in [TestIds.homeShop, TestIds.homeSettings]) {
+    final r = tester.getRect(find.byKey(k));
+    expect(view.contains(r.topLeft) && view.contains(r.bottomRight), isTrue);
+    expect(r.width >= 48 && r.height >= 48, isTrue);
+    for (final o in [play, daily, challenges]) {
+      expect(r.overlaps(o), isFalse, reason: '$k $r overlaps $o');
+    }
+  }
   final scroll = tester.state<ScrollableState>(find.byType(Scrollable).first);
   expect(scroll.position.maxScrollExtent, 0);
 }

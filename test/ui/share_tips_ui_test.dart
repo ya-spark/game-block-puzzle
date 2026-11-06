@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:block_puzzle/app.dart';
+import 'package:block_puzzle/core/save/save_data.dart';
+import 'package:block_puzzle/core/save/save_service.dart';
 import 'package:block_puzzle/core/services.dart';
 import 'package:block_puzzle/core/share/share_service.dart';
 import 'package:block_puzzle/game/flame/block_puzzle_game.dart';
@@ -64,6 +67,19 @@ Future<BlockPuzzleGame> pumpGame(
   );
   await PuzzleBot(tester).waitForGame();
   return game;
+}
+
+/// Save service whose `save` waits until [release] is called (a slow disk write).
+class _GatedSaveService extends MemorySaveService {
+  final _gate = Completer<void>();
+  bool gated = false;
+  void release() => _gate.complete();
+
+  @override
+  Future<void> save(SaveData d) async {
+    if (gated) await _gate.future;
+    await super.save(d);
+  }
 }
 
 void main() {
@@ -221,16 +237,18 @@ void main() {
   ) async {
     await endRun(tester);
     await tester.pump(); // first frame of the overlay
+    expect(find.byKey(TestIds.gameOverPanel), findsNothing, reason: 'hold');
+    await tester.pump(const Duration(milliseconds: 350));
     expect(find.byKey(TestIds.gameOverPanel), findsOneWidget);
     final score = find.textContaining('Score ');
     final shown = tester.widget<Text>(score).data;
     expect(retryTappable(tester), isFalse);
     await tester.pump(const Duration(milliseconds: 300));
     expect(retryTappable(tester), isFalse);
-    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump(const Duration(milliseconds: 300));
     expect(retryTappable(tester), isFalse);
     expect(tester.widget<Text>(score).data, shown);
-    await tester.pump(const Duration(milliseconds: 360));
+    await tester.pump(const Duration(milliseconds: 100));
     expect(retryTappable(tester), isTrue);
     expect(tester.widget<Text>(score).data, shown);
   });
@@ -296,6 +314,49 @@ void main() {
     await tester.pumpWidget(const SizedBox()); // a fresh home page
     await pumpApp(tester, s);
     expect(find.byKey(TestIds.tipHome), findsOneWidget);
+  });
+
+  testWidgets('no tip while a run is on screen: resume with the game on top', (
+    tester,
+  ) async {
+    var now = DateTime.utc(2026, 11, 5, 10);
+    final s = await buildFakeServices(clock: () => now, tips: true);
+    await pumpApp(tester, s);
+    await tester.tap(find.byKey(TestIds.tipClose));
+    await settle(tester);
+    await tester.tap(find.byKey(TestIds.homePlay));
+    await settle(tester);
+    expect(s.inRun, isTrue);
+    // A new day starts while the run is going, then the app comes back from the background.
+    now = DateTime.utc(2026, 11, 6, 10);
+    expect(s.profile.homeTipPending, isTrue);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await settle(tester);
+    expect(find.byKey(TestIds.tipHome), findsNothing);
+    // Nothing was queued: the tip is still pending.
+    expect(s.profile.homeTipPending, isTrue);
+  });
+
+  testWidgets('no tip when Play is tapped while the tip is still being saved', (
+    tester,
+  ) async {
+    final saves = _GatedSaveService();
+    final s = await buildFakeServices(tips: true, profileSaves: saves);
+    saves.gated = true; // the save that marks the tip as shown is slow
+    await pumpApp(tester, s);
+    expect(find.byKey(TestIds.tipHome), findsNothing);
+    await tester.tap(find.byKey(TestIds.homePlay));
+    await settle(tester);
+    expect(s.inRun, isTrue);
+    saves.release();
+    await settle(tester);
+    expect(find.byKey(TestIds.tipHome), findsNothing);
+    expect(find.byKey(TestIds.gameWidget), findsOneWidget);
   });
 
   testWidgets('home tip dialog never shows when tips are off', (tester) async {
