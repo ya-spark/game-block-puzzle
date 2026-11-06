@@ -130,6 +130,13 @@ Game over screen layout:
 ## 13. Behaviour and feel (owner decisions, exact values)
 Code: `lib/game/layout.dart` and `lib/game/flame/block_puzzle_game.dart`. `cell` = board cell size.
 
+**Home screen fits without scrolling** (owner, 2026-11-06). Code: `lib/ui/home_screen.dart`, `homeLayout` and `HomeGrid` in `lib/ui/widgets.dart`.
+- At normal text size the whole Home fits with no scrolling on a 360 x 640 dp window, and on taller ones.
+- Order: hero, title, stat chips, **Play** (290 x 76 dp), then a **2 x 2 grid** (290 dp wide, 10 dp gaps) of Daily reward, Challenges, Shop, Settings (compact `MenuButton`, 64 dp tall, icon beside a short label, badges unchanged). A button hidden by `retention` leaves no gap: the grid reflows, and a lone last button spans the row.
+- `HomeHero` is 160 dp when there is room and shrinks down to 96 dp when the space is short. Spacing between groups is 14 dp, and 10 dp when space is short (`homeLayout`).
+- A `SingleChildScrollView` stays only as a safety net (very small windows, text scale above 1.3).
+- Test IDs are unchanged. Tests: `test/ui/home_fit_test.dart`.
+
 **Drag and drop**
 - Pressing anywhere from 0.25 cell above the tray down to the bottom of the screen, across the full width, picks the tray slot under the press. Thumbs press below the piece, not on it (`traySlotAt`).
 - Vertical offset: the dragged piece's bottom edge floats **2.5 cells** above the finger, wherever the press landed (`dragLift = cell * 2.5`).
