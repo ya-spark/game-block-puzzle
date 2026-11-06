@@ -15,7 +15,7 @@ fill whole rows or columns to clear them. Plan ahead, build combos and beat your
 - Works offline
 
 Contains ads and optional in-app purchases (Remove Ads removes all ads; coin packs). Optional
-rewarded ads or coins let you continue after a game over.
+rewarded ads let you continue after a game over.
 
 **Category:** Games > Puzzle
 **Content rating notes:** No violence, no user-generated content, no multiplayer. Contains ads.

@@ -22,8 +22,6 @@ abstract final class TestIds {
   static const gameBack = Key('game.back');
   static const gameOverDialog = Key('game.over.dialog');
   static const gameOverRevive = Key('game.over.revive');
-  static const gameOverContinueAd = Key('game.over.continue.ad');
-  static const gameOverContinueCoins = Key('game.over.continue.coins');
   static const gateDialog = Key('gate.dialog');
   static const gateAnswer = Key('gate.answer');
   static const gateSubmit = Key('gate.submit');
