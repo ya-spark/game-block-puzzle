@@ -224,6 +224,28 @@ class Board {
     return true;
   }
 
+  /// Returns a board with [targets] emptied (cells and their special kinds). Used by the
+  /// boosts: no scoring, no effects, no gravity.
+  Board clearCells(Iterable<(int, int)> targets) {
+    final next = List<int>.of(_cells);
+    final nextKinds = List<CellKind>.of(_kinds);
+    for (final (r, c) in targets) {
+      next[r * size + c] = 0;
+      nextKinds[r * size + c] = CellKind.normal;
+    }
+    return Board._(size, List.unmodifiable(next), nextKinds);
+  }
+
+  /// Filled cells in row [r] / column [c].
+  int rowCount(int r) => _rowCount(r);
+  int colCount(int c) {
+    var n = 0;
+    for (var r = 0; r < size; r++) {
+      if (isFilled(r, c)) n++;
+    }
+    return n;
+  }
+
   /// Returns a board with the [count] fullest rows emptied (used by the revive).
   Board clearFullestRows(int count) {
     final order = List<int>.generate(size, (i) => i)

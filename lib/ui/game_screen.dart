@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +10,12 @@ import '../core/audio/audio_service.dart';
 import '../core/profile/profile_store.dart';
 import '../core/services.dart';
 import '../game/flame/block_puzzle_game.dart';
+import '../game/layout.dart';
+import '../game/rules/boosts.dart';
 import '../game/rules/game_state.dart';
+import 'boost_widgets.dart';
 import 'game_over_panel.dart';
+import 'routes.dart';
 import 'share_card.dart';
 import 'test_ids.dart';
 import 'theme_background.dart';
@@ -108,6 +113,108 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _audio.startAmbience();
     _audio.voice('go');
     return _game = game;
+  }
+
+  // ---- boosts -------------------------------------------------------------
+
+  void _snack(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  /// The boost row is hidden during the first game's first 3 placements.
+  bool _boostRowVisible(Services s, BlockPuzzleGame game) =>
+      s.profile.data.stats.gamesPlayed > 0 || game.state.piecesPlaced >= 3;
+
+  Future<void> _onBoostTap(
+    Services s,
+    BlockPuzzleGame game,
+    BoostDef def,
+  ) async {
+    final st = game.state;
+    if (st.isGameOver) return;
+    if (game.targeting == def.id) {
+      game.cancelTargeting(); // tapping the button again spends nothing
+      return;
+    }
+    if (!st.canUseBoost(def.id)) {
+      if (st.boostUsesLeft(def.id) <= 0) {
+        _snack('${def.name} is used up this game.');
+      }
+      return;
+    }
+    if (s.profile.itemCount(def.key) <= 0) {
+      game.cancelTargeting();
+      await _refill(s, game, def);
+      return;
+    }
+    switch (def.id) {
+      case BoostId.blast || BoostId.hammer:
+        game.armTargeting(def.id);
+      case BoostId.shuffle:
+        game.cancelTargeting();
+        if (game.applyShuffle()) await s.profile.useItem(def.key);
+      case BoostId.sweep:
+        game.cancelTargeting();
+        if (game.applySweep() != null) {
+          await s.profile.useItem(def.key);
+        } else {
+          _snack('Nothing to sweep.');
+        }
+      case BoostId.undo:
+        game.cancelTargeting();
+        final coins = game.applyUndo();
+        if (coins != null) {
+          await s.profile.useItem(def.key);
+          await s.profile.removeCoins(coins); // gem coins that move paid
+          await s.profile.setThemeIndex(game.themeIndex);
+        }
+    }
+  }
+
+  /// A tap on the board while Blast or Hammer is armed (a boost is spent only when applied).
+  Future<void> _applyTarget(Services s, BlockPuzzleGame game, Offset p) async {
+    final id = game.targeting;
+    if (id == null) return;
+    final cell = game.layout.cellAt(p.dx, p.dy);
+    if (cell == null) return;
+    final key = id.name;
+    if (game.applyTargeted(cell.$1, cell.$2) != null) {
+      await s.profile.useItem(key);
+    }
+  }
+
+  Future<void> _refill(Services s, BlockPuzzleGame game, BoostDef def) async {
+    final choice = await showBoostRefillSheet(
+      context,
+      services: s,
+      def: def,
+      adRefillsLeft: game.state.adRefillsLeft,
+    );
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case RefillChoice.coins:
+        if (await s.profile.buyItem(def.key)) {
+          _snack('Got 1 ${def.name}.');
+        }
+      case RefillChoice.shop:
+        await Navigator.of(context).pushNamed(AppRoutes.shop);
+      case RefillChoice.ad:
+        if (game.state.adRefillsLeft <= 0) return;
+        final ok =
+            s.profile.data.adsRemoved ||
+            await s.ads.showRewarded(AdPlacement.boostRefill);
+        if (!mounted) return;
+        if (ok && game.state.takeAdRefill()) {
+          await s.profile.addItem(def.key);
+          game.onChanged?.call();
+          _snack('Got 1 ${def.name}.');
+        } else {
+          _snack('No ad available right now. Try again in a moment.');
+        }
+    }
   }
 
   /// "Careful" once the board is over 70% full; re-armed when it clears out.
@@ -368,9 +475,92 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                     showStreak: s.config.retention.streaks,
                   ),
                   Expanded(
-                    child: GameWidget<BlockPuzzleGame>(
-                      key: TestIds.gameWidget,
-                      game: game,
+                    child: LayoutBuilder(
+                      builder: (context, box) {
+                        // Same geometry the game uses: the boost row sits in the free
+                        // strip above the board, so the board and tray do not move.
+                        final geo = PuzzleLayout(box.maxWidth, box.maxHeight);
+                        final rowTop = max(
+                          0.0,
+                          (geo.boardTop - 4 - boostButtonSize) / 2,
+                        );
+                        final armed = game.targeting;
+                        return Stack(
+                          children: [
+                            GameWidget<BlockPuzzleGame>(
+                              key: TestIds.gameWidget,
+                              game: game,
+                            ),
+                            if (armed != null)
+                              // Absorbs every touch while targeting: no piece drags.
+                              Positioned.fill(
+                                child: Listener(
+                                  key: TestIds.gameItemTarget,
+                                  behavior: HitTestBehavior.opaque,
+                                  onPointerDown: (e) =>
+                                      game.targetCell = game.layout.cellAt(
+                                        e.localPosition.dx,
+                                        e.localPosition.dy,
+                                      ),
+                                  onPointerMove: (e) =>
+                                      game.targetCell = game.layout.cellAt(
+                                        e.localPosition.dx,
+                                        e.localPosition.dy,
+                                      ),
+                                  onPointerUp: (e) =>
+                                      _applyTarget(s, game, e.localPosition),
+                                  onPointerCancel: (_) =>
+                                      game.targetCell = null,
+                                ),
+                              ),
+                            Positioned(
+                              top: rowTop,
+                              left: 0,
+                              right: 0,
+                              child: ListenableBuilder(
+                                listenable: s.profile,
+                                builder: (context, _) =>
+                                    !_boostRowVisible(s, game)
+                                    ? const SizedBox.shrink()
+                                    : Row(
+                                        key: TestIds.gameItemRow,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        spacing: 10,
+                                        children: [
+                                          for (final def in Boosts.all)
+                                            BoostButton(
+                                              def: def,
+                                              count: s.profile.itemCount(
+                                                def.key,
+                                              ),
+                                              armed: armed == def.id,
+                                              enabled:
+                                                  game.state.canUseBoost(
+                                                    def.id,
+                                                  ) &&
+                                                  !game.state.isGameOver,
+                                              onTap: () =>
+                                                  _onBoostTap(s, game, def),
+                                            ),
+                                        ],
+                                      ),
+                              ),
+                            ),
+                            if (armed != null)
+                              Positioned(
+                                bottom: 2,
+                                left: 0,
+                                right: 0,
+                                child: Center(
+                                  child: TargetChip(
+                                    onCancel: game.cancelTargeting,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        );
+                      },
                     ),
                   ),
                   KeyedSubtree(

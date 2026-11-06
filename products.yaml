@@ -10,15 +10,15 @@ products:
   - id: coins_500
     type: consumable
     title: Coin Pack
-    description: 500 coins. Coins for the shop.
+    description: 500 coins. Coins for boosts and streak freezes.
     coins: 500
   - id: coins_1500
     type: consumable
     title: Big Coin Pack
-    description: 1500 coins. Coins for the shop.
+    description: 1500 coins. Coins for boosts and streak freezes.
     coins: 1500
   - id: coins_4000
     type: consumable
     title: Coin Chest
-    description: 4000 coins. Coins for the shop.
+    description: 4000 coins. Coins for boosts and streak freezes.
     coins: 4000

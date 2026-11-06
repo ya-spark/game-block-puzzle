@@ -6,6 +6,7 @@ import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 
 import '../layout.dart';
+import '../rules/boosts.dart';
 import '../rules/game_state.dart';
 import '../rules/piece.dart';
 import '../rules/piece_generator.dart';
@@ -86,13 +87,84 @@ class BlockPuzzleGame extends FlameGame {
       generator: _generator,
     );
     view.cancelDrag();
+    targeting = null;
+    targetCell = null;
     onChanged?.call();
   }
 
   bool revive() {
     final ok = state.revive();
-    if (ok) onChanged?.call();
+    if (ok) {
+      cancelTargeting();
+      onChanged?.call();
+    }
     return ok;
+  }
+
+  // ---- boosts -------------------------------------------------------------
+
+  /// Boost waiting for a tapped cell (Blast or Hammer), or null.
+  BoostId? targeting;
+
+  /// Cell under the finger while targeting (drives the preview), or null.
+  (int, int)? targetCell;
+
+  void armTargeting(BoostId id) {
+    targeting = id;
+    targetCell = null;
+    view.cancelDrag();
+    onChanged?.call();
+  }
+
+  void cancelTargeting() {
+    if (targeting == null && targetCell == null) return;
+    targeting = null;
+    targetCell = null;
+    onChanged?.call();
+  }
+
+  /// Applies the armed boost at [row],[col]. Null when nothing was emptied (nothing is
+  /// spent and targeting stays armed).
+  BoostResult? applyTargeted(int row, int col) {
+    final r = switch (targeting) {
+      BoostId.blast => state.useBlast(row, col),
+      BoostId.hammer => state.useHammer(row, col),
+      _ => null,
+    };
+    if (r == null) return null;
+    targeting = null;
+    targetCell = null;
+    view.blast(r.cells);
+    onChanged?.call();
+    return r;
+  }
+
+  /// Board boosts that apply at once (Sweep): same visual as a blast.
+  BoostResult? applySweep() {
+    final r = state.useSweep();
+    if (r == null) return null;
+    view.blast(r.cells);
+    onChanged?.call();
+    return r;
+  }
+
+  /// Shuffle the tray.
+  bool applyShuffle() {
+    final ok = state.useShuffle();
+    if (ok) {
+      view.cancelDrag();
+      onChanged?.call();
+    }
+    return ok;
+  }
+
+  /// Undo the last placement; returns the gem coins to take back, or null if disabled.
+  int? applyUndo() {
+    final coins = state.useUndo();
+    if (coins == null) return null;
+    view.cancelDrag();
+    onChanged?.call();
+    return coins;
   }
 
   void _handlePlace(int slot, int row, int col) {
@@ -184,6 +256,7 @@ class PuzzleView extends PositionComponent
     final p = event.localPosition;
     final slot = layout.traySlotAt(p.x, p.y);
     if (slot != null &&
+        game.targeting == null &&
         game.state.tray[slot] != null &&
         !game.state.isGameOver) {
       _dragSlot = slot;
@@ -279,6 +352,30 @@ class PuzzleView extends PositionComponent
               ghost,
             );
           }
+        }
+      }
+    }
+
+    // Boost targeting: Blast previews its 3x3 area under the finger, Hammer one cell.
+    final target = game.targetCell;
+    if (game.targeting != null && target != null) {
+      final reach = game.targeting == BoostId.blast ? Boosts.blastRadius : 0;
+      final fill = Paint()..color = const Color(0x55FFFFFF);
+      final edge = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2
+        ..color = const Color(0xCCFFFFFF);
+      for (var r = target.$1 - reach; r <= target.$1 + reach; r++) {
+        for (var c = target.$2 - reach; c <= target.$2 + reach; c++) {
+          if (r < 0 || c < 0 || r >= 8 || c >= 8) continue;
+          final rect = Rect.fromLTWH(
+            layout.boardLeft + c * cs,
+            layout.boardTop + r * cs,
+            cs,
+            cs,
+          ).deflate(1);
+          canvas.drawRect(rect, fill);
+          canvas.drawRect(rect, edge);
         }
       }
     }

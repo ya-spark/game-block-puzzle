@@ -1,3 +1,4 @@
+import '../../game/rules/boosts.dart';
 import '../retention/achievements.dart';
 import '../retention/daily_challenges.dart';
 import '../retention/daily_reward.dart';
@@ -27,10 +28,23 @@ class SaveData {
     this.themeIndex = 0,
     this.tipsOff = false,
     this.tipHomeDay = -1,
+    this.items = const {
+      'blast': Boosts.startingStock,
+      'shuffle': Boosts.startingStock,
+      'undo': Boosts.startingStock,
+      'sweep': Boosts.startingStock,
+      'hammer': Boosts.startingStock,
+    },
   });
 
   /// Bump when the JSON shape changes and add a step to [SaveMigrator].
-  static const int currentVersion = 2;
+  static const int currentVersion = 3;
+
+  /// Boost stock by boost key (`blast`, `shuffle`, `undo`, `sweep`, `hammer`); never below 0.
+  final Map<String, int> items;
+
+  /// Stock of boost [key] (0 when unknown).
+  int itemCount(String key) => items[key] ?? 0;
 
   final int coins;
   final int bestScore;
@@ -92,7 +106,9 @@ class SaveData {
     int? themeIndex,
     bool? tipsOff,
     int? tipHomeDay,
+    Map<String, int>? items,
   }) => SaveData(
+    items: items ?? this.items,
     coins: coins ?? this.coins,
     bestScore: bestScore ?? this.bestScore,
     adsRemoved: adsRemoved ?? this.adsRemoved,
@@ -139,6 +155,7 @@ class SaveData {
     'themeIndex': themeIndex,
     'tipsOff': tipsOff,
     'tipHomeDay': tipHomeDay,
+    'items': {for (final e in items.entries) e.key: e.value},
   };
 
   /// Expects JSON already migrated to [currentVersion].
@@ -171,7 +188,17 @@ class SaveData {
     themeIndex: ((j['themeIndex'] as num?)?.toInt() ?? 0).abs(),
     tipsOff: j['tipsOff'] as bool? ?? false,
     tipHomeDay: (j['tipHomeDay'] as num?)?.toInt() ?? -1,
+    items: _items(j['items']),
   );
+
+  /// Missing `items` (should not happen after migration) means the starting stock.
+  static Map<String, int> _items(Object? o) {
+    if (o is! Map) return Boosts.startingItems();
+    return {
+      for (final d in Boosts.all)
+        d.key: ((o[d.key] as num?)?.toInt() ?? 0).clamp(0, 1 << 30),
+    };
+  }
 
   static Map<String, Object?>? _map(Object? o) =>
       o is Map ? o.cast<String, Object?>() : null;
@@ -191,6 +218,7 @@ abstract final class SaveMigrator {
       j = switch (v) {
         0 => _v0ToV1(j),
         1 => _v1ToV2(j),
+        2 => _v2ToV3(j),
         _ => throw StateError('No migration from $v'),
       };
       v = (j['version'] as num).toInt();
@@ -204,6 +232,13 @@ abstract final class SaveMigrator {
     'version': 1,
     'bestScore': j['bestScore'] ?? j['highScore'] ?? 0,
     'coins': j['coins'] ?? j['coinBalance'] ?? 0,
+  };
+
+  /// v3 added boost stock `items`: every existing save gets 1 of each boost.
+  static Map<String, Object?> _v2ToV3(Map<String, Object?> j) => {
+    ...j,
+    'version': 3,
+    'items': j['items'] ?? Boosts.startingItems(),
   };
 
   /// v2 added `processedPurchases` and `savedAtMs`.

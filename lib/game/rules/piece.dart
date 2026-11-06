@@ -76,7 +76,7 @@ abstract final class PieceCatalog {
         (2, 1),
         (2, 2),
       ],
-      weight: 1,
+      weight: 3,
     ),
     (name: 'corner3', cells: [(0, 0), (1, 0), (1, 1)], weight: 4),
     (
@@ -93,6 +93,12 @@ abstract final class PieceCatalog {
     // Diagonal pieces: cells touch only at corners (not edge-connected).
     (name: 'diag2', cells: [(0, 0), (1, 1)], weight: 1),
     (name: 'diag3', cells: [(0, 0), (1, 1), (2, 2)], weight: 1),
+    // 2x3 rectangle (6 cells): two orientations, 2 rows by 3 columns and 3 rows by 2.
+    (
+      name: 'rect23',
+      cells: [(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (1, 2)],
+      weight: 3,
+    ),
   ];
 
   static final List<({Piece piece, int weight})> weighted = _build();
@@ -121,6 +127,14 @@ abstract final class PieceCatalog {
       color++;
     }
     return out;
+  }
+
+  /// Catalogue base weight of [p] (per orientation).
+  static int baseWeightOf(Piece p) {
+    for (final w in weighted) {
+      if (w.piece.id == p.id) return w.weight;
+    }
+    return 1;
   }
 
   static Piece byId(String id) => all.firstWhere((p) => p.id == id);

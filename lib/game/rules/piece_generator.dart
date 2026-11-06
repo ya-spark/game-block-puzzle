@@ -59,7 +59,17 @@ class PieceGenerator {
     return list.last.piece;
   }
 
-  static int _weightOf(Piece p) => p.size == 4 ? fourCellWeight : 1;
+  /// Pieces of this many cells or more (the 2x3 rectangle and the 3x3 square) are never in
+  /// the prepared start tray, which stays three 4-cell pieces.
+  static const int bigPieceCells = 6;
+
+  /// Dealing weight: 4-cell shapes [fourCellWeight], big pieces (6+ cells) their catalogue
+  /// base weight, every other shape 1.
+  static int _weightOf(Piece p) {
+    if (p.size == 4) return fourCellWeight;
+    if (p.size >= bigPieceCells) return PieceCatalog.baseWeightOf(p);
+    return 1;
+  }
 
   /// Three pieces for [board]. Every piece fits the board on its own whenever any piece does.
   ///
@@ -85,6 +95,11 @@ class PieceGenerator {
     }
     return tray;
   }
+
+  /// Three new pieces for Shuffle: same dealing rules as [dealTray], but it does not advance
+  /// [traysDealt] (so the special-block cadence is untouched) and never has a special cell.
+  List<Piece> dealShuffle(Board board, {int count = 3, int linesCleared = 0}) =>
+      recolor(_deal(board, count: count, linesCleared: linesCleared));
 
   /// Puts one special cell (weights gem 3, boom 2, gold 1) on a random piece of at
   /// least 2 cells. Returns [tray] unchanged when no piece qualifies.

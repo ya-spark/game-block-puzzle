@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../game/rules/boosts.dart';
 import '../clock.dart';
 import '../config/app_config.dart';
 import '../config/products.dart';
@@ -195,6 +196,45 @@ class ProfileStore extends ChangeNotifier {
   Future<bool> spendCoins(int n) async {
     if (_data.coins < n) return false;
     await _commit(_data.copyWith(coins: _data.coins - n));
+    return true;
+  }
+
+  /// Takes back up to [n] coins (never below 0). Used by Undo for gem coins.
+  Future<void> removeCoins(int n) {
+    if (n <= 0) return Future.value();
+    final left = _data.coins - n;
+    return _commit(_data.copyWith(coins: left < 0 ? 0 : left));
+  }
+
+  // ---- boosts -------------------------------------------------------------
+
+  int itemCount(String key) => _data.itemCount(key);
+
+  Future<void> _setItem(String key, int n) =>
+      _commit(_data.copyWith(items: {..._data.items, key: n < 0 ? 0 : n}));
+
+  /// Spends one boost from the stock. False (nothing changes) when the stock is 0.
+  Future<bool> useItem(String key) async {
+    final n = _data.itemCount(key);
+    if (n <= 0) return false;
+    await _setItem(key, n - 1);
+    return true;
+  }
+
+  /// Adds [n] to the stock (ad refill, Remove Ads refill, shop).
+  Future<void> addItem(String key, [int n = 1]) =>
+      _setItem(key, _data.itemCount(key) + n);
+
+  /// Buys one boost with coins. False (nothing changes) when the coins are short.
+  Future<bool> buyItem(String key) async {
+    final def = Boosts.byKey(key);
+    if (def == null || _data.coins < def.price) return false;
+    await _commit(
+      _data.copyWith(
+        coins: _data.coins - def.price,
+        items: {..._data.items, key: _data.itemCount(key) + 1},
+      ),
+    );
     return true;
   }
 

@@ -37,6 +37,18 @@ abstract final class TestIds {
   static const gameCombo = Key('game.combo');
   static const gameRush = Key('game.rush');
 
+  // Boosts (`<id>` is blast, shuffle, undo, sweep, hammer)
+  static Key gameItem(String id) => Key('game.item.$id');
+  static Key gameItemCount(String id) => Key('game.item.$id.count');
+  static const gameItemRow = Key('game.item.row');
+  static const gameItemChip = Key('game.item.chip');
+  static const gameItemCancel = Key('game.item.cancel');
+  static const gameItemTarget = Key('game.item.target');
+  static const gameItemSheet = Key('game.item.sheet');
+  static const gameItemRefillCoins = Key('game.item.refill.coins');
+  static const gameItemRefillAd = Key('game.item.refill.ad');
+  static const gameItemRefillShop = Key('game.item.refill.shop');
+
   /// Invisible; its Semantics value is the id of the current theme.
   static const gameTheme = Key('game.theme');
 
@@ -55,6 +67,9 @@ abstract final class TestIds {
   static const shopRestore = Key('shop.restore');
   static const shopUnavailable = Key('shop.unavailable');
   static Key shopBuy(String productId) => Key('shop.buy.$productId');
+  static const shopBoosts = Key('shop.boosts');
+  static Key shopItemBuy(String id) => Key('shop.item.$id.buy');
+  static Key shopItemCount(String id) => Key('shop.item.$id.count');
 
   // Settings
   static const settingsSound = Key('settings.sound');

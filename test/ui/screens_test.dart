@@ -87,7 +87,8 @@ void main() {
     expect(find.byIcon(Icons.monetization_on), findsNothing);
     await tester.tap(find.byKey(TestIds.homeShop));
     await tester.pumpAndSettle();
-    expect(find.byType(CoinIcon), findsNWidgets(3));
+    // Three coin packs plus the boost rows that are built on screen.
+    expect(find.byType(CoinIcon), findsAtLeastNWidgets(3));
     expect(find.byIcon(Icons.monetization_on), findsNothing);
   });
 
@@ -102,7 +103,10 @@ void main() {
         tester.getTopLeft(find.byKey(TestIds.shopBuy(id))).dy,
     ];
     expect(ys, [...ys]..sort());
-    expect(find.textContaining('Coins for the shop.'), findsNWidgets(3));
+    expect(
+      find.textContaining('Coins for boosts and streak freezes.'),
+      findsNWidgets(3),
+    );
   });
 
   testWidgets('parent gate: cancel buys nothing; wrong answers lock for 60 s', (

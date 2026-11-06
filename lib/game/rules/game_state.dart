@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'board.dart';
+import 'boosts.dart';
 import 'piece.dart';
 import 'piece_generator.dart';
 import 'start_board.dart';
@@ -44,6 +45,34 @@ class PlaceOutcome {
   /// Combo multiplier in effect for this placement (1 = no combo).
   final int combo;
   final bool gameOver;
+}
+
+/// Everything Undo restores, taken before each placement.
+class _Snapshot {
+  _Snapshot(GameState g)
+    : board = g.board,
+      tray = List<Piece?>.of(g._tray),
+      score = g.score,
+      bestScore = g.bestScore,
+      comboStreak = g.comboStreak,
+      linesClearedTotal = g.linesClearedTotal,
+      piecesPlaced = g.piecesPlaced,
+      maxComboReached = g.maxComboReached,
+      rushLeft = g.rushLeft,
+      traysDealt = g._generator.traysDealt;
+  final Board board;
+  final List<Piece?> tray;
+  final int score;
+  final int bestScore;
+  final int comboStreak;
+  final int linesClearedTotal;
+  final int piecesPlaced;
+  final int maxComboReached;
+  final int rushLeft;
+  final int traysDealt;
+
+  /// Gem coins the placement after this snapshot paid.
+  int gemCoins = 0;
 }
 
 /// Full state of one block-puzzle game. Pure Dart: no Flutter, Flame or Android imports,
@@ -115,6 +144,103 @@ class GameState {
   int revivesUsed = 0;
   bool isGameOver = false;
 
+  _Snapshot? _snapshot;
+  final Map<BoostId, int> _boostUses = {};
+
+  /// Ad refills taken in this game (all boosts together).
+  int adRefillsUsed = 0;
+
+  /// Boost uses this game for [id] (hard cap per game, whatever the stock source).
+  int boostUses(BoostId id) => _boostUses[id] ?? 0;
+  int boostUsesLeft(BoostId id) => Boosts.def(id).maxUses - boostUses(id);
+
+  int get adRefillsLeft => Boosts.maxAdRefillsPerGame - adRefillsUsed;
+
+  /// Takes one ad refill from this game's allowance. False when none is left.
+  bool takeAdRefill() {
+    if (adRefillsLeft <= 0) return false;
+    adRefillsUsed++;
+    return true;
+  }
+
+  /// Undo has something to take back (greyed otherwise).
+  bool get canUndo => _snapshot != null && !isGameOver;
+
+  /// A boost may be used now: game running and per-game cap not reached (Undo also needs
+  /// a snapshot). The stock is checked by the caller.
+  bool canUseBoost(BoostId id) {
+    if (isGameOver || boostUsesLeft(id) <= 0) return false;
+    return id != BoostId.undo || _snapshot != null;
+  }
+
+  /// Common tail of a successful boost: counts the use, drops the Undo snapshot and
+  /// re-checks game over. Score, combo, stage, lines and Gold Rush are untouched.
+  void _boostDone(BoostId id) {
+    _boostUses[id] = boostUses(id) + 1;
+    _snapshot = null;
+    _checkGameOver();
+  }
+
+  /// Blast at [row],[col]. Null (nothing spent) when not allowed or nothing is filled there.
+  BoostResult? useBlast(int row, int col) {
+    if (!canUseBoost(BoostId.blast)) return null;
+    final r = Boosts.blast(board, row, col);
+    if (r == null) return null;
+    board = r.board;
+    _boostDone(BoostId.blast);
+    return r;
+  }
+
+  /// Hammer on [row],[col].
+  BoostResult? useHammer(int row, int col) {
+    if (!canUseBoost(BoostId.hammer)) return null;
+    final r = Boosts.hammer(board, row, col);
+    if (r == null) return null;
+    board = r.board;
+    _boostDone(BoostId.hammer);
+    return r;
+  }
+
+  /// Line Sweep.
+  BoostResult? useSweep() {
+    if (!canUseBoost(BoostId.sweep)) return null;
+    final r = Boosts.sweep(board);
+    if (r == null) return null;
+    board = r.board;
+    _boostDone(BoostId.sweep);
+    return r;
+  }
+
+  /// Shuffle: a whole new tray from the seeded generator. The tray counter that drives
+  /// special blocks does not advance, and a special cell on the old tray is gone.
+  bool useShuffle() {
+    if (!canUseBoost(BoostId.shuffle)) return false;
+    _tray = List<Piece?>.of(
+      _generator.dealShuffle(board, linesCleared: linesClearedTotal),
+    );
+    _boostDone(BoostId.shuffle);
+    return true;
+  }
+
+  /// Undo: restores the state before the last placement. Returns the gem coins that
+  /// placement paid (the caller takes them back, balance not below 0), or null if disabled.
+  int? useUndo() {
+    if (!canUseBoost(BoostId.undo)) return null;
+    final s = _snapshot!;
+    board = s.board;
+    _tray = List<Piece?>.of(s.tray);
+    score = s.score;
+    bestScore = s.bestScore;
+    comboStreak = s.comboStreak;
+    linesClearedTotal = s.linesClearedTotal;
+    piecesPlaced = s.piecesPlaced;
+    maxComboReached = s.maxComboReached;
+    rushLeft = s.rushLeft;
+    _generator.traysDealt = s.traysDealt;
+    _boostDone(BoostId.undo);
+    return s.gemCoins;
+  }
+
   /// Pieces offered; a slot is null once used.
   List<Piece?> get tray => List.unmodifiable(_tray);
 
@@ -136,6 +262,7 @@ class GameState {
   PlaceOutcome? place(int slot, int row, int col) {
     if (!canPlace(slot, row, col)) return null;
     final piece = _tray[slot]!;
+    final snapshot = _Snapshot(this);
     final result = board.place(piece, row, col);
     board = result.board;
     _tray[slot] = null;
@@ -170,6 +297,8 @@ class GameState {
     }
     score += gained;
     if (score > bestScore) bestScore = score;
+    snapshot.gemCoins = gems;
+    _snapshot = snapshot;
 
     if (_tray.every((p) => p == null)) {
       _tray = List<Piece?>.of(
@@ -203,6 +332,7 @@ class GameState {
   bool revive() {
     if (!canRevive) return false;
     revivesUsed++;
+    _snapshot = null;
     board = board.clearFullestRows(2);
     _tray = List<Piece?>.of(
       _generator.dealTray(board, linesCleared: linesClearedTotal),

@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-enum AdPlacement { gameOver, revive }
+enum AdPlacement { gameOver, revive, boostRefill }
 
 /// All advertising goes through this interface. UI/game code never imports an ad SDK.
 abstract interface class AdService {
