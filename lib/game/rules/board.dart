@@ -121,6 +121,30 @@ class Board {
     return false;
   }
 
+  /// Rows and columns that would be full after placing [p] at [row],[col] (they would
+  /// clear). Does not check that the placement is legal; used for the drag preview.
+  ({List<int> rows, List<int> cols}) linesCompletedBy(
+    Piece p,
+    int row,
+    int col,
+  ) {
+    final placed = <int>{
+      for (final (dr, dc) in p.cells) (row + dr) * size + (col + dc),
+    };
+    bool filled(int r, int c) =>
+        isFilled(r, c) || placed.contains(r * size + c);
+    return (
+      rows: [
+        for (var r = 0; r < size; r++)
+          if (List.generate(size, (c) => filled(r, c)).every((f) => f)) r,
+      ],
+      cols: [
+        for (var c = 0; c < size; c++)
+          if (List.generate(size, (r) => filled(r, c)).every((f) => f)) c,
+      ],
+    );
+  }
+
   /// Places [p] at [row],[col] (top-left of its bounding box) and clears full lines.
   /// Throws if the placement is illegal; check [canPlace] first.
   PlacementResult place(Piece p, int row, int col) {

@@ -30,6 +30,10 @@ abstract final class TestIds {
   static const gameOverRetry = Key('game.over.retry');
   static const gameOverHome = Key('game.over.home');
   static const gameOverShare = Key('game.over.share');
+  static const gameOverBestMove = Key('game.over.bestMove');
+  static const bestMoveDialog = Key('bestMove.dialog');
+  static const bestMoveBoard = Key('bestMove.board');
+  static const bestMoveNext = Key('bestMove.next');
   static const gameOverPanel = Key('game.over.panel');
   static const gameOverView = Key('game.over.view');
   static const gameBanner = Key('game.banner');

@@ -11,8 +11,10 @@ import '../core/profile/profile_store.dart';
 import '../core/services.dart';
 import '../game/flame/block_puzzle_game.dart';
 import '../game/layout.dart';
+import '../game/rules/best_move.dart';
 import '../game/rules/boosts.dart';
 import '../game/rules/game_state.dart';
+import 'best_move_dialog.dart';
 import 'boost_widgets.dart';
 import 'game_over_panel.dart';
 import 'routes.dart';
@@ -366,6 +368,21 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
           ),
           Text('Best ${game.state.bestScore}'),
+          TextButton.icon(
+            key: TestIds.gameOverBestMove,
+            icon: const Icon(Icons.lightbulb_outline),
+            label: const Text('Show best move'),
+            onPressed: () => showDialog<void>(
+              context: ctx,
+              builder: (_) => BestMoveDialog(
+                best: BestMoveSolver.solve(
+                  game.state.trayStartBoard,
+                  game.state.trayStartPieces,
+                ),
+                theme: game.theme,
+              ),
+            ),
+          ),
           if (game.state.canRevive)
             Text(
               'Continues left: ${game.state.revivesRemaining}',

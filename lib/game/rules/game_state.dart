@@ -59,8 +59,12 @@ class _Snapshot {
       piecesPlaced = g.piecesPlaced,
       maxComboReached = g.maxComboReached,
       rushLeft = g.rushLeft,
-      traysDealt = g._generator.traysDealt;
+      traysDealt = g._generator.traysDealt,
+      trayStartBoard = g.trayStartBoard,
+      trayStartPieces = g.trayStartPieces;
   final Board board;
+  final Board trayStartBoard;
+  final List<Piece> trayStartPieces;
   final List<Piece?> tray;
   final int score;
   final int bestScore;
@@ -87,6 +91,7 @@ class GameState {
        board = board ?? Board.empty() {
     final dealt = tray ?? _generator.dealTray(this.board, allowSpecial: false);
     _tray = List<Piece?>.of(dealt);
+    _markTray();
     _checkGameOver();
   }
 
@@ -133,6 +138,7 @@ class GameState {
       gen.traysDealt = (j['traysDealt']! as num).toInt();
       final g = GameState(board: board, generator: gen, bestScore: bestScore);
       g._tray = tray;
+      g._markTray();
       g.score = (j['score']! as num).toInt();
       if (g.score > g.bestScore) g.bestScore = g.score;
       g.comboStreak = (j['comboStreak']! as num).toInt();
@@ -312,6 +318,7 @@ class GameState {
     _tray = List<Piece?>.of(
       _generator.dealShuffle(board, linesCleared: linesClearedTotal),
     );
+    _markTray();
     _boostDone(BoostId.shuffle);
     return true;
   }
@@ -323,6 +330,8 @@ class GameState {
     final s = _snapshot!;
     board = s.board;
     _tray = List<Piece?>.of(s.tray);
+    trayStartBoard = s.trayStartBoard;
+    trayStartPieces = s.trayStartPieces;
     score = s.score;
     bestScore = s.bestScore;
     comboStreak = s.comboStreak;
@@ -333,6 +342,15 @@ class GameState {
     _generator.traysDealt = s.traysDealt;
     _boostDone(BoostId.undo);
     return s.gemCoins;
+  }
+
+  /// The board and pieces when the current tray was dealt, for the game over "best move".
+  late Board trayStartBoard;
+  late List<Piece> trayStartPieces;
+
+  void _markTray() {
+    trayStartBoard = board;
+    trayStartPieces = [for (final p in _tray) ?p];
   }
 
   /// Pieces offered; a slot is null once used.
@@ -398,6 +416,7 @@ class GameState {
       _tray = List<Piece?>.of(
         _generator.dealTray(board, linesCleared: linesClearedTotal),
       );
+      _markTray();
     }
     _checkGameOver();
     return PlaceOutcome(
@@ -431,6 +450,7 @@ class GameState {
     _tray = List<Piece?>.of(
       _generator.dealTray(board, linesCleared: linesClearedTotal),
     );
+    _markTray();
     comboStreak = 0;
     _checkGameOver();
     return true;

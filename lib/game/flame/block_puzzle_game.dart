@@ -339,6 +339,34 @@ class PuzzleView extends PositionComponent
         final cell = _dragTopLeftCell(piece);
         if (cell != null) {
           final (r, c) = cell;
+          // Rows and columns this drop would clear light up, so the player can judge it
+          // before letting go.
+          final clears = game.state.board.linesCompletedBy(piece, r, c);
+          final glow = Paint()..color = const Color(0x66FFD54F);
+          final glowEdge = Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3
+            ..color = const Color(0xE6FFD54F);
+          for (final row in clears.rows) {
+            final rect = Rect.fromLTWH(
+              layout.boardLeft,
+              layout.boardTop + row * cs,
+              layout.boardSizePx,
+              cs,
+            );
+            canvas.drawRect(rect, glow);
+            canvas.drawRect(rect, glowEdge);
+          }
+          for (final col in clears.cols) {
+            final rect = Rect.fromLTWH(
+              layout.boardLeft + col * cs,
+              layout.boardTop,
+              cs,
+              layout.boardSizePx,
+            );
+            canvas.drawRect(rect, glow);
+            canvas.drawRect(rect, glowEdge);
+          }
           final ghost = Paint()
             ..color = theme.colorAt(piece.colorIndex).withAlpha(90);
           for (final (dr, dc) in piece.cells) {
