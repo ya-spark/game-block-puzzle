@@ -215,18 +215,18 @@ class _AmbienceRowState extends State<_AmbienceRow> {
     final data = widget.profile.data;
     // Ink text on the white panel: the dark app theme would otherwise paint it light.
     const style = TextStyle(
-      fontSize: 16,
+      fontSize: 15,
       fontWeight: FontWeight.w800,
       color: KidColors.ink,
     );
     return ListTile(
       title: const Text('Background sound'),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+      subtitle: Row(
         children: [
           DropdownButton<String>(
             key: TestIds.settingsAmbience,
             value: data.ambience,
+            isDense: true,
             style: style,
             dropdownColor: Colors.white,
             iconEnabledColor: KidColors.ink,
@@ -250,6 +250,7 @@ class _AmbienceRowState extends State<_AmbienceRow> {
           IconButton(
             key: TestIds.settingsAmbiencePreview,
             tooltip: 'Preview',
+            visualDensity: VisualDensity.compact,
             color: KidColors.ink,
             icon: Icon(
               _preview.playing == data.ambience

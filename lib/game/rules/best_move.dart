@@ -67,8 +67,7 @@ abstract final class BestMoveSolver {
       for (final p in pieces)
         [
           for (var r = 0; r + p.height <= _size; r++)
-            for (var c = 0; c + p.width <= _size; c++)
-              (r, c, _maskOf(p, r, c)),
+            for (var c = 0; c + p.width <= _size; c++) (r, c, _maskOf(p, r, c)),
         ],
     ];
     final used = List<bool>.filled(pieces.length, false);

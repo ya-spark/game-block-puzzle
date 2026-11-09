@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../game/rules/best_move.dart';
-import '../game/rules/board.dart';
 import '../game/themes/block_theme.dart';
 import 'test_ids.dart';
 

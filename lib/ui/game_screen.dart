@@ -103,10 +103,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     var restoredThemeStart = s.profile.data.themeIndex;
     final saved = widget.game == null ? s.profile.data.game : null;
     if (saved != null) {
-      restored = GameState.fromJson(
-        saved,
-        bestScore: s.profile.data.bestScore,
-      );
+      restored = GameState.fromJson(saved, bestScore: s.profile.data.bestScore);
       restoredThemeStart =
           (saved['themeStart'] as num?)?.toInt() ?? restoredThemeStart;
       if (restored == null) s.profile.saveGame(null);
