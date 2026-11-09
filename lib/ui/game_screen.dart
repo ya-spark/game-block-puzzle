@@ -21,6 +21,7 @@ import 'routes.dart';
 import 'share_card.dart';
 import 'test_ids.dart';
 import 'theme_background.dart';
+import 'widgets.dart';
 
 /// Player-facing name of the rewarded-ad second chance on the game over screen (rename it here only).
 const String continueLabel = 'Continue';
@@ -368,6 +369,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             style: const TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
           ),
           Text('Best ${game.state.bestScore}'),
+          if (!s.profile.data.adsRemoved)
+            RemoveAdsPill(
+              key: TestIds.gameOverRemoveAds,
+              onPressed: () => Navigator.of(ctx).pushNamed(AppRoutes.shop),
+            ),
           TextButton.icon(
             key: TestIds.gameOverBestMove,
             icon: const Icon(Icons.lightbulb_outline),

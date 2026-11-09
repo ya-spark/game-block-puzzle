@@ -298,6 +298,14 @@ Future<RefillChoice?> showBoostRefillSheet(
                   fontWeight: FontWeight.w800,
                 ),
               ),
+              const SizedBox(height: 6),
+              // What the power does, readable before spending anything.
+              Text(
+                def.description,
+                key: TestIds.gameItemDescription,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white70, fontSize: 15),
+              ),
               const SizedBox(height: 12),
               FilledButton(
                 key: TestIds.gameItemRefillCoins,
