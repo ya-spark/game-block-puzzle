@@ -9,7 +9,6 @@ abstract final class TestIds {
   static const homeChallenges = Key('home.challenges');
   static const homeShop = Key('home.shop');
   static const gameItemDescription = Key('game.item.description');
-  static const homeRemoveAds = Key('home.removeAds');
   static const gameOverRemoveAds = Key('game.over.removeAds');
   static const homeSettings = Key('home.settings');
   static const homeCoins = Key('home.coins');

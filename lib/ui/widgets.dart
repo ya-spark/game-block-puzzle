@@ -244,18 +244,16 @@ class _BadgeDot extends StatelessWidget {
 /// 8 dp spacer, Play (60) and the Daily reward / Challenges row (52).
 const double _homeFixedHeight = 58 + 48 + 8 + 60 + 52;
 
-/// Height of the Remove Ads pill on Home (`RemoveAdsPill`), added when it shows.
+/// Height of the Remove Ads pill (`RemoveAdsPill`).
 const double _removeAdsHeight = 40;
 
 /// Hero band height and spacing between Home groups for [available] dp of height: 160 and 10 when
 /// there is room, else spacing 8 and the hero shrinks down to 96.
-(double, double) homeLayout(double available, {bool removeAdsOffer = false}) {
-  final fixed = _homeFixedHeight + (removeAdsOffer ? _removeAdsHeight : 0);
-  final gaps = removeAdsOffer ? 6 : 5;
-  if (available >= fixed + gaps * 10 + HomeHero.maxHeight) {
+(double, double) homeLayout(double available) {
+  if (available >= _homeFixedHeight + 5 * 10 + HomeHero.maxHeight) {
     return (HomeHero.maxHeight, 10);
   }
-  final hero = (available - fixed - gaps * 8).clamp(
+  final hero = (available - _homeFixedHeight - 5 * 8).clamp(
     HomeHero.minHeight,
     HomeHero.maxHeight,
   );
