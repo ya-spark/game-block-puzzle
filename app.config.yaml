@@ -35,7 +35,7 @@ admob:
 
 # Ad pacing (see lib/core/ads/ad_frequency.dart).
 ads:
-  interstitial_min_interval_seconds: 90
+  interstitial_min_interval_seconds: 180
   interstitial_every_n_game_overs: 2
   max_interstitials_per_session: 6
   no_interstitial_first_seconds: 60

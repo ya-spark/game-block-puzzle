@@ -37,7 +37,7 @@ class AdmobIds {
 
 class AdPacingConfig {
   const AdPacingConfig({
-    this.interstitialMinIntervalSeconds = 90,
+    this.interstitialMinIntervalSeconds = 180,
     this.interstitialEveryNGameOvers = 2,
     this.maxInterstitialsPerSession = 6,
     this.noInterstitialFirstSeconds = 60,
@@ -244,7 +244,7 @@ class AppConfig {
       admobRelease: AdmobIds.fromYaml(admob['release'] as YamlMap),
       adPacing: AdPacingConfig(
         interstitialMinIntervalSeconds:
-            ads['interstitial_min_interval_seconds'] as int? ?? 90,
+            ads['interstitial_min_interval_seconds'] as int? ?? 180,
         interstitialEveryNGameOvers:
             ads['interstitial_every_n_game_overs'] as int? ?? 2,
         maxInterstitialsPerSession:
