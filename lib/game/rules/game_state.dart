@@ -105,6 +105,100 @@ class GameState {
     );
   }
 
+  /// Saved game (see [toJson]). Undo history is not kept. The pieces come back from the
+  /// catalogue by id, so a game saved by this version always loads on the same version.
+  /// Returns null when [j] is unusable, so a bad save starts a fresh game instead of crashing.
+  static GameState? fromJson(
+    Map<String, Object?> j, {
+    required int bestScore,
+    PieceGenerator? generator,
+  }) {
+    try {
+      final b = j['board']! as Map;
+      final size = (b['size']! as num).toInt();
+      final board = Board.restore(
+        size,
+        [for (final c in b['cells']! as List) (c as num).toInt()],
+        [
+          for (final k in b['kinds']! as List)
+            CellKind.values[(k as num).toInt()],
+        ],
+      );
+      final tray = <Piece?>[
+        for (final p in j['tray']! as List)
+          p == null ? null : _pieceFromJson(p as Map),
+      ];
+      if (tray.length != traySlots) return null;
+      final gen = generator ?? PieceGenerator();
+      gen.traysDealt = (j['traysDealt']! as num).toInt();
+      final g = GameState(board: board, generator: gen, bestScore: bestScore);
+      g._tray = tray;
+      g.score = (j['score']! as num).toInt();
+      if (g.score > g.bestScore) g.bestScore = g.score;
+      g.comboStreak = (j['comboStreak']! as num).toInt();
+      g.linesClearedTotal = (j['linesClearedTotal']! as num).toInt();
+      g.piecesPlaced = (j['piecesPlaced']! as num).toInt();
+      g.maxComboReached = (j['maxComboReached']! as num).toInt();
+      g.revivesUsed = (j['revivesUsed']! as num).toInt();
+      g.rushLeft = (j['rushLeft']! as num).toInt();
+      g.adRefillsUsed = (j['adRefillsUsed']! as num).toInt();
+      final uses = j['boostUses']! as Map;
+      for (final id in BoostId.values) {
+        final n = (uses[id.name] as num?)?.toInt() ?? 0;
+        if (n > 0) g._boostUses[id] = n;
+      }
+      g._checkGameOver();
+      return g.isGameOver ? null : g;
+    } on Object {
+      return null;
+    }
+  }
+
+  /// The running game as JSON, for the autosave. Not meaningful once the game is over.
+  Map<String, Object?> toJson() => {
+    'board': {
+      'size': board.size,
+      'cells': board.cells,
+      'kinds': [for (final k in board.kinds) k.index],
+    },
+    'tray': [
+      for (final p in _tray)
+        p == null
+            ? null
+            : {
+                'id': p.id,
+                'color': p.colorIndex,
+                if (p.kinds != null)
+                  'kinds': [for (final k in p.kinds!) k.index],
+              },
+    ],
+    'score': score,
+    'comboStreak': comboStreak,
+    'linesClearedTotal': linesClearedTotal,
+    'piecesPlaced': piecesPlaced,
+    'maxComboReached': maxComboReached,
+    'revivesUsed': revivesUsed,
+    'rushLeft': rushLeft,
+    'adRefillsUsed': adRefillsUsed,
+    'traysDealt': _generator.traysDealt,
+    'boostUses': {for (final e in _boostUses.entries) e.key.name: e.value},
+  };
+
+  static Piece _pieceFromJson(Map p) {
+    final base = PieceCatalog.byId(p['id']! as String);
+    final kinds = p['kinds'] as List?;
+    return Piece(
+      base.id,
+      base.cells,
+      (p['color']! as num).toInt() % Piece.colorCount,
+      kinds == null
+          ? null
+          : List.unmodifiable([
+              for (final k in kinds) CellKind.values[(k as num).toInt()],
+            ]),
+    );
+  }
+
   static const int traySlots = 3;
   static const int maxRevives = 3;
   static const int maxCombo = 8;

@@ -95,12 +95,33 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   BlockPuzzleGame _ensureGame(Services s) {
     final existing = _game;
     if (existing != null) return existing;
+    // An unfinished game (autosave) comes back as it was; a bad save is dropped.
+    GameState? restored;
+    var restoredThemeStart = s.profile.data.themeIndex;
+    final saved = widget.game == null ? s.profile.data.game : null;
+    if (saved != null) {
+      restored = GameState.fromJson(
+        saved,
+        bestScore: s.profile.data.bestScore,
+      );
+      restoredThemeStart =
+          (saved['themeStart'] as num?)?.toInt() ?? restoredThemeStart;
+      if (restored == null) s.profile.saveGame(null);
+    }
     final game =
         widget.game ??
         BlockPuzzleGame(
           bestScore: s.profile.data.bestScore,
-          themeStart: s.profile.data.themeIndex,
+          themeStart: restored != null
+              ? restoredThemeStart
+              : s.profile.data.themeIndex,
+          initialState: restored,
         );
+    if (restored != null && restored.piecesPlaced > 0) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _snack('Game resumed'),
+      );
+    }
     _profile = s.profile..addListener(_applyAudio);
     game.onPlaced = (o) {
       // Remember the rotation so a new game (or a new launch) continues it.
@@ -117,6 +138,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     game.onChanged = () {
       if (!mounted) return;
       setState(() {});
+      _autosave(s, game);
     };
     game.onGameOver = () {
       if (game.state.score > s.profile.data.bestScore) {
@@ -130,6 +152,17 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _audio.startAmbience();
     _audio.voice('go');
     return _game = game;
+  }
+
+  /// Saves the running game after every change so Back, a call or a kill never loses it.
+  /// A finished game clears the save (the game over flow records it).
+  void _autosave(Services s, BlockPuzzleGame game) {
+    final st = game.state;
+    if (st.isGameOver) {
+      s.profile.saveGame(null);
+    } else {
+      s.profile.saveGame({...st.toJson(), 'themeStart': game.themeStart});
+    }
   }
 
   // ---- boosts -------------------------------------------------------------

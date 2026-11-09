@@ -85,6 +85,16 @@ class ProfileStore extends ChangeNotifier {
     await _commit(d);
   }
 
+  /// Autosave of the running game (null clears it). Skips the write when nothing changed.
+  Future<void> saveGame(Map<String, Object?>? game) {
+    if (game == null && _data.game == null) return Future.value();
+    return _commit(
+      game == null
+          ? _data.copyWith(clearGame: true)
+          : _data.copyWith(game: game),
+    );
+  }
+
   Future<void> _commit(SaveData d) async {
     _data = d;
     notifyListeners();

@@ -60,6 +60,16 @@ class Board {
     return Board._(size, List.unmodifiable(cells));
   }
 
+  /// Board from saved data: row-major [cells] and, optionally, a [kinds] list of the same length.
+  factory Board.restore(int size, List<int> cells, [List<CellKind>? kinds]) {
+    assert(cells.length == size * size);
+    assert(kinds == null || kinds.length == cells.length);
+    return Board._(size, List.unmodifiable(cells), kinds);
+  }
+
+  /// Kind of every cell, row-major (parallel to [cells]).
+  List<CellKind> get kinds => _kinds;
+
   /// [kinds] marks special cells by (row, col); they must be filled cells.
   factory Board.fromRows(
     List<String> rows, {

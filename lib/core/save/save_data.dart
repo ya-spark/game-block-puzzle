@@ -28,6 +28,7 @@ class SaveData {
     this.themeIndex = 0,
     this.tipsOff = false,
     this.tipHomeDay = -1,
+    this.game,
     this.items = const {
       'blast': Boosts.startingStock,
       'shuffle': Boosts.startingStock,
@@ -84,6 +85,9 @@ class SaveData {
   /// Day index on which the home tip of the day was closed.
   final int tipHomeDay;
 
+  /// The unfinished game (autosave), or null when none is running. See `GameState.toJson`.
+  final Map<String, Object?>? game;
+
   SaveData copyWith({
     int? coins,
     int? bestScore,
@@ -107,7 +111,10 @@ class SaveData {
     bool? tipsOff,
     int? tipHomeDay,
     Map<String, int>? items,
+    Map<String, Object?>? game,
+    bool clearGame = false,
   }) => SaveData(
+    game: clearGame ? null : (game ?? this.game),
     items: items ?? this.items,
     coins: coins ?? this.coins,
     bestScore: bestScore ?? this.bestScore,
@@ -156,6 +163,7 @@ class SaveData {
     'tipsOff': tipsOff,
     'tipHomeDay': tipHomeDay,
     'items': {for (final e in items.entries) e.key: e.value},
+    if (game != null) 'game': game,
   };
 
   /// Expects JSON already migrated to [currentVersion].
@@ -189,6 +197,7 @@ class SaveData {
     tipsOff: j['tipsOff'] as bool? ?? false,
     tipHomeDay: (j['tipHomeDay'] as num?)?.toInt() ?? -1,
     items: _items(j['items']),
+    game: _map(j['game']),
   );
 
   /// Missing `items` (should not happen after migration) means the starting stock.
