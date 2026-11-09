@@ -88,12 +88,12 @@ void main() {
     }
   });
 
-  testWidgets('row is hidden during the first game first 3 placements', (
+  testWidgets('row is visible from the start of the very first game', (
     tester,
   ) async {
     final s = await buildFakeServices();
     await _pump(tester, s, placed: 0);
-    expect(find.byKey(TestIds.gameItemRow), findsNothing);
+    expect(find.byKey(TestIds.gameItemRow), findsOneWidget);
   });
 
   testWidgets('arming and cancelling Blast and Hammer spends nothing', (

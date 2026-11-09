@@ -141,10 +141,6 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       ..showSnackBar(SnackBar(content: Text(text)));
   }
 
-  /// The boost row is hidden during the first game's first 3 placements.
-  bool _boostRowVisible(Services s, BlockPuzzleGame game) =>
-      s.profile.data.stats.gamesPlayed > 0 || game.state.piecesPlaced >= 3;
-
   Future<void> _onBoostTap(
     Services s,
     BlockPuzzleGame game,
@@ -544,32 +540,23 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                               right: 0,
                               child: ListenableBuilder(
                                 listenable: s.profile,
-                                builder: (context, _) =>
-                                    !_boostRowVisible(s, game)
-                                    ? const SizedBox.shrink()
-                                    : Row(
-                                        key: TestIds.gameItemRow,
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        spacing: 10,
-                                        children: [
-                                          for (final def in Boosts.all)
-                                            BoostButton(
-                                              def: def,
-                                              count: s.profile.itemCount(
-                                                def.key,
-                                              ),
-                                              armed: armed == def.id,
-                                              enabled:
-                                                  game.state.canUseBoost(
-                                                    def.id,
-                                                  ) &&
-                                                  !game.state.isGameOver,
-                                              onTap: () =>
-                                                  _onBoostTap(s, game, def),
-                                            ),
-                                        ],
+                                builder: (context, _) => Row(
+                                  key: TestIds.gameItemRow,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  spacing: 10,
+                                  children: [
+                                    for (final def in Boosts.all)
+                                      BoostButton(
+                                        def: def,
+                                        count: s.profile.itemCount(def.key),
+                                        armed: armed == def.id,
+                                        enabled:
+                                            game.state.canUseBoost(def.id) &&
+                                            !game.state.isGameOver,
+                                        onTap: () => _onBoostTap(s, game, def),
                                       ),
+                                  ],
+                                ),
                               ),
                             ),
                             if (armed != null)

@@ -142,6 +142,7 @@ class MenuButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  if (compact) const SizedBox(width: 9),
                   Icon(
                     icon,
                     color: Colors.white,
@@ -155,9 +156,9 @@ class MenuButton extends StatelessWidget {
                         label,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: primary ? 24 : (compact ? 16 : 20),
+                          fontSize: primary ? 24 : (compact ? 15 : 20),
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
+                          letterSpacing: compact ? 0 : 0.5,
                           shadows: const [
                             Shadow(
                               color: Color(0x55000000),
@@ -168,6 +169,7 @@ class MenuButton extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (compact) const SizedBox(width: 9),
                 ],
               ),
             ),
@@ -274,7 +276,7 @@ class HomeGrid extends StatelessWidget {
         ),
       );
     }
-    return SizedBox(width: 240, child: Column(spacing: 8, children: rows));
+    return SizedBox(width: 272, child: Column(spacing: 8, children: rows));
   }
 }
 

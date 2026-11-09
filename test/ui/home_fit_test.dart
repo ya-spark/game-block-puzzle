@@ -37,7 +37,7 @@ void _expectFits(WidgetTester tester, Size size) {
       reason: '$k $r is outside $view',
     );
   }
-  // Home layout v2: Play 240 x 60, Daily reward and Challenges 116 x 52 side by side, 8 dp apart.
+  // Home layout v2: Play 240 x 60, Daily reward and Challenges 132 x 52 side by side, 8 dp apart.
   final play = tester.getRect(find.byKey(TestIds.homePlay));
   final daily = tester.getRect(find.byKey(TestIds.homeDailyReward));
   final challenges = tester.getRect(find.byKey(TestIds.homeChallenges));
@@ -47,8 +47,8 @@ void _expectFits(WidgetTester tester, Size size) {
   }
 
   expectSize(play, 240, 60);
-  expectSize(daily, 116, 52);
-  expectSize(challenges, 116, 52);
+  expectSize(daily, 132, 52);
+  expectSize(challenges, 132, 52);
   expect(challenges.left - daily.right, closeTo(8, 0.5));
   expect(daily.top, challenges.top);
   expect(play.overlaps(daily) || play.overlaps(challenges), isFalse);
@@ -78,4 +78,37 @@ void main() {
     await _pumpHome(tester, const Size(360, 640), textScale: 1.5);
     expect(tester.takeException(), isNull);
   });
+
+  // The Daily reward / Challenges labels stay clear of the pill's rounded ends and border.
+  for (final scale in const [1.0, 1.5]) {
+    for (final size in const [Size(320, 568), Size(360, 640)]) {
+      testWidgets(
+        'Daily reward and Challenges labels fit at $size, text scale $scale',
+        (tester) async {
+          await _pumpHome(tester, size, textScale: scale);
+          expect(tester.takeException(), isNull);
+          for (final k in [TestIds.homeDailyReward, TestIds.homeChallenges]) {
+            final button = tester.getRect(find.byKey(k));
+            final label = tester.getRect(
+              find.descendant(
+                of: find.byKey(k),
+                matching: find.byType(FittedBox),
+              ),
+            );
+            // Label box sits inside the button with room for the border and the rounded ends.
+            expect(
+              label.left,
+              greaterThanOrEqualTo(button.left + 9),
+              reason: '$k',
+            );
+            expect(
+              label.right,
+              lessThanOrEqualTo(button.right - 9),
+              reason: '$k',
+            );
+          }
+        },
+      );
+    }
+  }
 }
