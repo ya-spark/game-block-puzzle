@@ -8,6 +8,11 @@ abstract final class TestIds {
   static const homeDailyReward = Key('home.dailyReward');
   static const homeChallenges = Key('home.challenges');
   static const homeShop = Key('home.shop');
+  static const gamePauseResume = Key('game.pause.resume');
+  static const gamePauseQuit = Key('game.pause.quit');
+  static const resumeDialog = Key('home.resume.dialog');
+  static const resumeGame = Key('home.resume.resume');
+  static const resumeNewGame = Key('home.resume.new');
   static const gameItemDescription = Key('game.item.description');
   static const gameOverRemoveAds = Key('game.over.removeAds');
   static const homeSettings = Key('home.settings');

@@ -66,6 +66,36 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
 
   void _open(String route) => Navigator.of(context).pushNamed(route);
 
+  /// Play: with an unfinished game saved, ask Resume or New game first.
+  Future<void> _play() async {
+    final profile = ServicesScope.of(context).profile;
+    if (profile.data.game != null) {
+      final choice = await showDialog<String>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          key: TestIds.resumeDialog,
+          title: const Text('Unfinished game'),
+          content: const Text('Resume it, or start a new game?'),
+          actions: [
+            TextButton(
+              key: TestIds.resumeNewGame,
+              onPressed: () => Navigator.pop(ctx, 'new'),
+              child: const Text('New game'),
+            ),
+            FilledButton(
+              key: TestIds.resumeGame,
+              onPressed: () => Navigator.pop(ctx, 'resume'),
+              child: const Text('Resume'),
+            ),
+          ],
+        ),
+      );
+      if (choice == null) return;
+      if (choice == 'new') await profile.saveGame(null);
+    }
+    if (mounted) _open(AppRoutes.play);
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = ServicesScope.of(context);
@@ -144,7 +174,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
                                 label: 'Play!',
                                 icon: Icons.play_circle_fill,
                                 primary: true,
-                                onPressed: () => _open(AppRoutes.play),
+                                onPressed: _play,
                               ),
                               HomeGrid(
                                 children: [

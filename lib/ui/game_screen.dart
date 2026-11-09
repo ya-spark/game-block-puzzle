@@ -52,6 +52,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   BlockPuzzleGame? _game;
   bool _recorded = false;
   bool _dialogOpen = false;
+  bool _pauseOpen = false;
   final AudioService _audio = AudioService();
   bool _warned = false;
   ProfileStore? _profile;
@@ -106,7 +107,12 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       restored = GameState.fromJson(saved, bestScore: s.profile.data.bestScore);
       restoredThemeStart =
           (saved['themeStart'] as num?)?.toInt() ?? restoredThemeStart;
-      if (restored == null) s.profile.saveGame(null);
+      if (restored == null) {
+        // Not during build: clearing notifies the profile's listeners.
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => s.profile.saveGame(null),
+        );
+      }
     }
     final game =
         widget.game ??
@@ -162,6 +168,45 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       s.profile.saveGame(null);
     } else {
       s.profile.saveGame({...st.toJson(), 'themeStart': game.themeStart});
+    }
+  }
+
+  /// Back or the arrow: ask Resume or Exit. The game is saved after every move, so Exit
+  /// just leaves; the next Play offers Resume or New game.
+  Future<void> _askPause() async {
+    if (_dialogOpen || _pauseOpen || !mounted) return;
+    final game = _game;
+    if (game == null || game.state.isGameOver) {
+      if (mounted) Navigator.of(context).pop();
+      return;
+    }
+    _pauseOpen = true;
+    _audio.pauseAmbience();
+    final exit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Paused'),
+        actions: [
+          TextButton(
+            key: TestIds.gamePauseQuit,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Exit'),
+          ),
+          FilledButton(
+            key: TestIds.gamePauseResume,
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Resume'),
+          ),
+        ],
+      ),
+    );
+    _pauseOpen = false;
+    if (!mounted) return;
+    if (exit ?? false) {
+      Navigator.of(context).pop();
+    } else {
+      _audio.startAmbience();
     }
   }
 
@@ -466,7 +511,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final s = ServicesScope.of(context);
     final game = _ensureGame(s);
-    return Scaffold(
+    final scaffold = Scaffold(
       body: ThemeBackground(
         theme: game.theme,
         child: Stack(
@@ -502,7 +547,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                                     ? Icons.chevron_right
                                     : Icons.chevron_left,
                               ),
-                              onPressed: () => Navigator.of(context).pop(),
+                              onPressed: _askPause,
                             ),
                             const Spacer(),
                             Container(
@@ -638,6 +683,14 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           ],
         ),
       ),
+    );
+    // Back (the system button and the arrow) asks Resume or Exit instead of leaving.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _askPause();
+      },
+      child: scaffold,
     );
   }
 }
