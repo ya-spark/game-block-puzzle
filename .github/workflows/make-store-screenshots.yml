@@ -1,0 +1,28 @@
+# Uploads store/google-play/graphics/screenshots/phone-*.png to the Play store listing (replaces all phone
+# screenshots of the chosen locale). Manual only. Dry run by default: tick "upload" to really change the listing.
+# The steps live in game-factory (.github/workflows/shared-make-store-screenshots.yml); the secret and the
+# "internal" environment stay in THIS repo.
+name: make-store-screenshots
+
+on:
+  workflow_dispatch:
+    inputs:
+      locale:
+        description: Store listing language
+        type: string
+        default: en-US
+      upload:
+        description: Really upload (otherwise a dry run that only lists the files)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    uses: ya-spark/game-factory/.github/workflows/shared-make-store-screenshots.yml@main
+    with:
+      locale: ${{ inputs.locale }}
+      upload: ${{ inputs.upload || false }}
+    secrets: inherit
