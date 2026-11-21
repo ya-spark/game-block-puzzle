@@ -5,22 +5,15 @@ import 'package:block_puzzle/app.dart';
 import 'package:block_puzzle/core/ads/ad_service.dart';
 import 'package:block_puzzle/core/purchase/parent_gate_guard.dart';
 import 'package:block_puzzle/core/purchase/purchase_service.dart';
-import 'package:block_puzzle/core/retention/daily_reward.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 import 'package:block_puzzle/core/services.dart';
-import 'package:block_puzzle/game/flame/block_puzzle_game.dart';
-import 'package:block_puzzle/game/rules/board.dart';
-import 'package:block_puzzle/game/rules/game_state.dart';
-import 'package:block_puzzle/game/rules/piece.dart';
-import 'package:block_puzzle/game/rules/piece_generator.dart';
-import 'package:block_puzzle/ui/game_screen.dart';
-import 'package:block_puzzle/ui/home_hero.dart';
-import 'package:block_puzzle/ui/test_ids.dart';
-import 'package:block_puzzle/ui/theme_background.dart';
-import 'package:block_puzzle/ui/widgets.dart';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:block_puzzle/core/block_puzzle_host.dart';
 
 import '../helpers/fake_services.dart';
-import '../helpers/puzzle_bot.dart';
+
+import 'package:game_block_puzzle/testing.dart';
 
 Future<void> pumpApp(WidgetTester tester, Services s) async {
   tester.view.physicalSize = const Size(400, 800);
@@ -67,7 +60,10 @@ Future<BlockPuzzleGame> pumpGameOver(WidgetTester tester, Services s) async {
   await tester.pumpWidget(
     ServicesScope(
       services: s,
-      child: MaterialApp(home: GameScreen(game: game)),
+      child: BlockPuzzleServicesScope(
+        services: BlockPuzzleServicesAdapter(s),
+        child: MaterialApp(home: GameScreen(game: game)),
+      ),
     ),
   );
   final bot = PuzzleBot(tester);
@@ -373,7 +369,10 @@ void main() {
       await tester.pumpWidget(
         ServicesScope(
           services: s,
-          child: const MaterialApp(home: GameScreen()),
+          child: BlockPuzzleServicesScope(
+            services: BlockPuzzleServicesAdapter(s),
+            child: const MaterialApp(home: GameScreen()),
+          ),
         ),
       );
       await tester.pump();
@@ -448,7 +447,10 @@ void main() {
     await tester.pumpWidget(
       ServicesScope(
         services: s,
-        child: MaterialApp(home: GameScreen(game: game)),
+        child: BlockPuzzleServicesScope(
+          services: BlockPuzzleServicesAdapter(s),
+          child: MaterialApp(home: GameScreen(game: game)),
+        ),
       ),
     );
     final bot = PuzzleBot(tester);
@@ -493,7 +495,10 @@ void main() {
         await tester.pumpWidget(
           ServicesScope(
             services: s,
-            child: MaterialApp(home: GameScreen(game: game)),
+            child: BlockPuzzleServicesScope(
+              services: BlockPuzzleServicesAdapter(s),
+              child: MaterialApp(home: GameScreen(game: game)),
+            ),
           ),
         );
         final bot = PuzzleBot(tester);
@@ -533,7 +538,10 @@ void main() {
     await tester.pumpWidget(
       ServicesScope(
         services: s,
-        child: MaterialApp(home: GameScreen(game: game)),
+        child: BlockPuzzleServicesScope(
+          services: BlockPuzzleServicesAdapter(s),
+          child: MaterialApp(home: GameScreen(game: game)),
+        ),
       ),
     );
     await PuzzleBot(tester).waitForGame();
@@ -569,7 +577,10 @@ void main() {
       await tester.pumpWidget(
         ServicesScope(
           services: s,
-          child: MaterialApp(home: GameScreen(game: game)),
+          child: BlockPuzzleServicesScope(
+            services: BlockPuzzleServicesAdapter(s),
+            child: MaterialApp(home: GameScreen(game: game)),
+          ),
         ),
       );
       final bot = PuzzleBot(tester);

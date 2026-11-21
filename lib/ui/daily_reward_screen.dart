@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../core/retention/daily_reward.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
+
 import '../core/services.dart';
-import 'test_ids.dart';
-import 'widgets.dart';
 
 class DailyRewardScreen extends StatelessWidget {
   const DailyRewardScreen({super.key});

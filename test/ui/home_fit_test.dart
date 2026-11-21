@@ -1,5 +1,5 @@
 import 'package:block_puzzle/app.dart';
-import 'package:block_puzzle/ui/test_ids.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

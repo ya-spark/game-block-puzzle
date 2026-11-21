@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:block_puzzle/ui/test_ids.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 
 import '../helpers/fake_services.dart';
 import 'screens_test.dart' show pumpApp;

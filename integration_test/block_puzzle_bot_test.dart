@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:block_puzzle/main.dart' as app;
-import 'package:block_puzzle/ui/test_ids.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import '../test/helpers/puzzle_bot.dart';
+import 'package:game_block_puzzle/testing.dart';
 
 /// Runs the real app on a device/emulator and plays the first moves of the block puzzle
 /// with real pointer gestures. Run: `flutter test integration_test -d <device>`.

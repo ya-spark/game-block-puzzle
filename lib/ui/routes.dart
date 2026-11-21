@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'challenges_screen.dart';
 import 'daily_reward_screen.dart';
-import 'game_screen.dart';
+
+import 'package:game_block_puzzle/block_puzzle.dart';
+
 import 'home_screen.dart';
 import 'settings_screen.dart';
 import 'shop_screen.dart';

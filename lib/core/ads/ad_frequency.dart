@@ -1,4 +1,5 @@
-import '../clock.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
+
 import '../config/app_config.dart';
 
 /// Pure policy deciding whether an interstitial may be shown. No SDK imports.

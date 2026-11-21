@@ -4,18 +4,15 @@ import 'package:block_puzzle/app.dart';
 import 'package:block_puzzle/core/ads/ad_service.dart';
 import 'package:block_puzzle/core/purchase/purchase_service.dart';
 import 'package:block_puzzle/core/services.dart';
-import 'package:block_puzzle/game/flame/block_puzzle_game.dart';
-import 'package:block_puzzle/game/rules/board.dart';
-import 'package:block_puzzle/game/rules/game_state.dart';
-import 'package:block_puzzle/game/rules/piece.dart';
-import 'package:block_puzzle/game/rules/piece_generator.dart';
-import 'package:block_puzzle/ui/game_screen.dart';
-import 'package:block_puzzle/ui/test_ids.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:block_puzzle/core/block_puzzle_host.dart';
 
 import '../helpers/fake_services.dart';
-import '../helpers/puzzle_bot.dart';
+
+import 'package:game_block_puzzle/testing.dart';
 
 Board _board() => Board.fromRows([
   '########',
@@ -47,7 +44,10 @@ Future<(BlockPuzzleGame, PuzzleBot)> _pump(
   await tester.pumpWidget(
     ServicesScope(
       services: s,
-      child: MaterialApp(home: GameScreen(game: game)),
+      child: BlockPuzzleServicesScope(
+        services: BlockPuzzleServicesAdapter(s),
+        child: MaterialApp(home: GameScreen(game: game)),
+      ),
     ),
   );
   final bot = PuzzleBot(tester);

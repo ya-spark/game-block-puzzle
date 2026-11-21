@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../core/retention/achievements.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
+
 import '../core/services.dart';
-import '../game/themes/block_theme.dart';
-import 'share_card.dart';
-import 'test_ids.dart';
-import 'widgets.dart';
 
 class ChallengesScreen extends StatelessWidget {
   const ChallengesScreen({super.key});

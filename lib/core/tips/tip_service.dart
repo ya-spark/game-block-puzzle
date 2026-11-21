@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import '../../game/tips.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 
 /// Deals tips from a shuffled bag (never the same tip twice in a row) and picks the tip of
 /// the day from the date. Pure Dart.

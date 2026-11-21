@@ -53,3 +53,5 @@ android/key.properties
 *.keystore
 *service-account*.json
 *.p12
+
+pubspec_overrides.yaml

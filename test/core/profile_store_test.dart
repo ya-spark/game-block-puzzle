@@ -4,6 +4,7 @@ import 'package:block_puzzle/core/profile/profile_store.dart';
 import 'package:block_puzzle/core/purchase/purchase_service.dart';
 import 'package:block_puzzle/core/save/save_service.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 
 const _catalog = ProductCatalog([
   ProductDef(

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../core/services.dart';
-import 'test_ids.dart';
+
+import 'package:game_block_puzzle/block_puzzle.dart';
 
 /// Opens the tip of the day as a dialog (once per day, from the home page).
 Future<void> showTipDialog(BuildContext context, {required String text}) {

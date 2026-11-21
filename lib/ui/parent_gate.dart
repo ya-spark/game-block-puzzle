@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../core/purchase/parent_gate_guard.dart';
-import 'test_ids.dart';
+
+import 'package:game_block_puzzle/block_puzzle.dart';
 
 /// Asks a grown-up (a multiplication) before a real-money purchase. Returns true when answered
 /// correctly. Three wrong answers in a row close the dialog and lock purchases for 60 s.

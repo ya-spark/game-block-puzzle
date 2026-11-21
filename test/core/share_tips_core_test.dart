@@ -4,7 +4,7 @@ import 'dart:math';
 import 'package:block_puzzle/core/config/app_config.dart';
 import 'package:block_puzzle/core/share/share_service.dart';
 import 'package:block_puzzle/core/tips/tip_service.dart';
-import 'package:block_puzzle/game/tips.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

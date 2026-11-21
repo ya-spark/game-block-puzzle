@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'save_data.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 
 /// Persists the player's [SaveData]. Game/UI code depends only on this interface.
 abstract interface class SaveService {

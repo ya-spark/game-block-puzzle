@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import '../clock.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 
 enum GateAnswer { correct, wrong, locked }
 

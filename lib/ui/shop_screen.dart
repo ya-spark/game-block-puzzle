@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../core/config/products.dart';
 import '../core/services.dart';
-import '../game/rules/boosts.dart';
+
+import 'package:game_block_puzzle/block_puzzle.dart';
+
 import 'parent_gate.dart';
-import 'test_ids.dart';
-import 'widgets.dart';
 
 class ShopScreen extends StatelessWidget {
   const ShopScreen({super.key});

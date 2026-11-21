@@ -1,34 +1,16 @@
 import 'package:flutter/foundation.dart';
 
-import '../../game/rules/boosts.dart';
-import '../clock.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
+
 import '../config/app_config.dart';
 import '../config/products.dart';
 import '../purchase/purchase_service.dart';
-import '../retention/achievements.dart';
-import '../retention/daily_challenges.dart';
-import '../retention/daily_reward.dart';
-import '../retention/streaks.dart';
-import '../save/save_data.dart';
-import '../save/save_service.dart';
 
-/// Result of one finished game, fed into stats / challenges / achievements.
-class GameSummary {
-  const GameSummary({
-    required this.score,
-    required this.linesCleared,
-    required this.piecesPlaced,
-    required this.maxCombo,
-  });
-  final int score;
-  final int linesCleared;
-  final int piecesPlaced;
-  final int maxCombo;
-}
+import '../save/save_service.dart';
 
 /// Holds the player's [SaveData], applies the retention engines and persists every change.
 /// UI listens to it; game rules never touch it.
-class ProfileStore extends ChangeNotifier {
+class ProfileStore extends ChangeNotifier implements BlockPuzzleProfileStore {
   ProfileStore({required this._saves, required this.retention, Clock? clock})
     : _clock = clock ?? DateTime.now;
 
@@ -38,6 +20,7 @@ class ProfileStore extends ChangeNotifier {
   static const ClockGuard _guard = ClockGuard();
 
   SaveData _data = const SaveData();
+  @override
   SaveData get data => _data;
 
   /// Device clock is behind the latest time we saw (the player moved it back).
@@ -86,6 +69,7 @@ class ProfileStore extends ChangeNotifier {
   }
 
   /// Autosave of the running game (null clears it). Skips the write when nothing changed.
+  @override
   Future<void> saveGame(Map<String, Object?>? game) {
     if (game == null && _data.game == null) return Future.value();
     return _commit(
@@ -123,6 +107,7 @@ class ProfileStore extends ChangeNotifier {
 
   // ---- streak -------------------------------------------------------------
 
+  @override
   int get displayStreak => StreakEngine.displayStreak(_data.streak, today);
 
   // ---- challenges ---------------------------------------------------------
@@ -142,6 +127,7 @@ class ProfileStore extends ChangeNotifier {
   // ---- gameplay -----------------------------------------------------------
 
   /// Records a finished game. Returns achievements unlocked by it.
+  @override
   Future<List<AchievementDef>> recordGameFinished(GameSummary g) async {
     var d = _data;
     final stats = d.stats.copyWith(
@@ -200,9 +186,11 @@ class ProfileStore extends ChangeNotifier {
 
   // ---- coins / settings ---------------------------------------------------
 
+  @override
   Future<void> addCoins(int n) =>
       _commit(_data.copyWith(coins: _data.coins + n));
 
+  @override
   Future<bool> spendCoins(int n) async {
     if (_data.coins < n) return false;
     await _commit(_data.copyWith(coins: _data.coins - n));
@@ -210,6 +198,7 @@ class ProfileStore extends ChangeNotifier {
   }
 
   /// Takes back up to [n] coins (never below 0). Used by Undo for gem coins.
+  @override
   Future<void> removeCoins(int n) {
     if (n <= 0) return Future.value();
     final left = _data.coins - n;
@@ -218,12 +207,14 @@ class ProfileStore extends ChangeNotifier {
 
   // ---- boosts -------------------------------------------------------------
 
+  @override
   int itemCount(String key) => _data.itemCount(key);
 
   Future<void> _setItem(String key, int n) =>
       _commit(_data.copyWith(items: {..._data.items, key: n < 0 ? 0 : n}));
 
   /// Spends one boost from the stock. False (nothing changes) when the stock is 0.
+  @override
   Future<bool> useItem(String key) async {
     final n = _data.itemCount(key);
     if (n <= 0) return false;
@@ -232,10 +223,12 @@ class ProfileStore extends ChangeNotifier {
   }
 
   /// Adds [n] to the stock (ad refill, Remove Ads refill, shop).
+  @override
   Future<void> addItem(String key, [int n = 1]) =>
       _setItem(key, _data.itemCount(key) + n);
 
   /// Buys one boost with coins. False (nothing changes) when the coins are short.
+  @override
   Future<bool> buyItem(String key) async {
     final def = Boosts.byKey(key);
     if (def == null || _data.coins < def.price) return false;
@@ -254,6 +247,7 @@ class ProfileStore extends ChangeNotifier {
   Future<void> setAmbience(String id) => _commit(_data.copyWith(ambience: id));
   Future<void> setVoice(bool v) => _commit(_data.copyWith(voiceOn: v));
   Future<void> setLeftHanded(bool v) => _commit(_data.copyWith(leftHanded: v));
+  @override
   Future<void> setThemeIndex(int v) {
     if (v == _data.themeIndex) return Future.value();
     return _commit(_data.copyWith(themeIndex: v));
@@ -265,7 +259,9 @@ class ProfileStore extends ChangeNotifier {
   // ---- tips ---------------------------------------------------------------
 
   /// Tips on/off: the "Don't show tips again" checkbox and the settings switch share this.
+  @override
   bool get tipsEnabled => !_data.tipsOff;
+  @override
   Future<void> setTipsEnabled(bool v) => _commit(_data.copyWith(tipsOff: !v));
 
   /// The home tip of the day has not been closed today.

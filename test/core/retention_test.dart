@@ -1,8 +1,5 @@
-import 'package:block_puzzle/core/clock.dart';
-import 'package:block_puzzle/core/retention/achievements.dart';
-import 'package:block_puzzle/core/retention/daily_challenges.dart';
-import 'package:block_puzzle/core/retention/daily_reward.dart';
-import 'package:block_puzzle/core/retention/streaks.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

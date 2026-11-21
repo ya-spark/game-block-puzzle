@@ -3,7 +3,7 @@ import 'package:block_puzzle/app.dart';
 import 'package:block_puzzle/core/config/app_config.dart';
 import 'package:block_puzzle/core/links/external_link_service.dart';
 import 'package:block_puzzle/core/services.dart';
-import 'package:block_puzzle/ui/test_ids.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/fake_services.dart';

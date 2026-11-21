@@ -2,25 +2,19 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:block_puzzle/app.dart';
-import 'package:block_puzzle/core/save/save_data.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
 import 'package:block_puzzle/core/save/save_service.dart';
 import 'package:block_puzzle/core/services.dart';
 import 'package:block_puzzle/core/share/share_service.dart';
-import 'package:block_puzzle/game/flame/block_puzzle_game.dart';
-import 'package:block_puzzle/game/rules/board.dart';
-import 'package:block_puzzle/game/rules/game_state.dart';
-import 'package:block_puzzle/game/rules/piece.dart';
-import 'package:block_puzzle/game/rules/piece_generator.dart';
-import 'package:block_puzzle/game/themes/block_theme.dart';
-import 'package:block_puzzle/ui/game_screen.dart';
-import 'package:block_puzzle/ui/share_card.dart';
-import 'package:block_puzzle/ui/test_ids.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:block_puzzle/core/block_puzzle_host.dart';
 
 import '../helpers/fake_services.dart';
-import '../helpers/puzzle_bot.dart';
+
+import 'package:game_block_puzzle/testing.dart';
 
 Future<void> pumpApp(WidgetTester tester, Services s) async {
   tester.view.physicalSize = const Size(400, 800);
@@ -62,7 +56,10 @@ Future<BlockPuzzleGame> pumpGame(
   await tester.pumpWidget(
     ServicesScope(
       services: s,
-      child: MaterialApp(home: GameScreen(game: game)),
+      child: BlockPuzzleServicesScope(
+        services: BlockPuzzleServicesAdapter(s),
+        child: MaterialApp(home: GameScreen(game: game)),
+      ),
     ),
   );
   await PuzzleBot(tester).waitForGame();
@@ -280,7 +277,10 @@ void main() {
       await tester.pumpWidget(
         ServicesScope(
           services: s,
-          child: MaterialApp(home: GameScreen(game: game)),
+          child: BlockPuzzleServicesScope(
+            services: BlockPuzzleServicesAdapter(s),
+            child: MaterialApp(home: GameScreen(game: game)),
+          ),
         ),
       );
       await PuzzleBot(tester).waitForGame();

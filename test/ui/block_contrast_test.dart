@@ -1,8 +1,8 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:block_puzzle/game/rules/piece.dart';
-import 'package:block_puzzle/game/themes/block_theme.dart';
+import 'package:game_block_puzzle/block_puzzle.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 
 double _lum(Color c) {
