@@ -43,7 +43,7 @@ dependencies:
     git:
       url: https://github.com/ya-spark/game-factory.git
       path: games/block_puzzle
-      ref: fa388cc4f1f4e160102018f0cce4f3f0b8109c23
+      ref: 4c07f78ab3d39b77fe25216381a087a7bb061bd7
   yaml: ^3.1.4
   flutter_timezone: ^5.1.1
   games_services: ^5.3.0
@@ -73,7 +73,7 @@ dependency_overrides:
     git:
       url: https://github.com/ya-spark/game-factory.git
       path: game_core
-      ref: fa388cc4f1f4e160102018f0cce4f3f0b8109c23
+      ref: 4c07f78ab3d39b77fe25216381a087a7bb061bd7
 
 flutter:
   uses-material-design: true
