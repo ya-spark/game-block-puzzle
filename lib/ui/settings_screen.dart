@@ -201,7 +201,7 @@ class _AmbienceRow extends StatefulWidget {
 }
 
 class _AmbienceRowState extends State<_AmbienceRow> {
-  final AmbiencePreview _preview = AmbiencePreview();
+  final AmbiencePreview _preview = AmbiencePreview(tracks: ambienceTracks);
 
   @override
   void dispose() {
